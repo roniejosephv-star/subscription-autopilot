@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Blocks commits containing secret-bearing files.
+# Activate once:  git config core.hooksPath scripts/hooks
+# Bypass (only for false positives): git commit --no-verify
+set -euo pipefail
+
+BLOCKED='(^|/)\.env$|\.env\.local$|\.db(-shm|-wal|-journal)?$|recovery.*\.dat$|entity-secret|get-address\.mjs$|private.*key'
+STAGED=$(git diff --cached --name-only)
+
+if HITS=$(echo "$STAGED" | grep -iE "$BLOCKED"); then
+  echo "✖ COMMIT BLOCKED — secret-bearing files staged:"
+  echo "$HITS" | sed 's/^/    /'
+  echo "  Unstage: git restore --staged <file>   (or git rm --cached <file> if already tracked)"
+  exit 1
+fi
+
+# Scan staged content for raw 64-hex strings (private keys / entity secrets).
+# NOTE: tx hashes are also 64-hex — this errs on the side of asking.
+if git diff --cached -U0 | grep -qE '^\+.*(0x)?[0-9a-fA-F]{64}'; then
+  echo "⚠ BLOCKED: staged content contains a 64-hex string (possible key/secret)."
+  echo "  Review:  git diff --cached | grep -nE '[0-9a-fA-F]{64}'"
+  echo "  If it's a legit tx hash / test vector: git commit --no-verify"
+  exit 1
+fi
