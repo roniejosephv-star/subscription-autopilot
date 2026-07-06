@@ -14,6 +14,7 @@ const servers: Server[] = [];
 /** Close all listeners immediately on interrupt so tsx never has to force-kill. */
 for (const sig of ["SIGINT", "SIGTERM"] as const) {
   process.once(sig, () => {
+    console.log(`[sellers] ${sig} — shutting down cleanly`);
     for (const s of servers) s.close();
     for (const s of servers) s.closeAllConnections?.();
     process.exit(0);

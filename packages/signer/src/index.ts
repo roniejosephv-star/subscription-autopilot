@@ -281,9 +281,10 @@ server.on("error", (err: NodeJS.ErrnoException) => {
   throw err;
 });
 
-/** Exit immediately on interrupt so tsx never has to force-kill. */
+/** Exit immediately on interrupt so the watcher never has to force-kill. */
 for (const sig of ["SIGINT", "SIGTERM"] as const) {
   process.once(sig, () => {
+    console.log(`[spendguard] ${sig} — shutting down cleanly`);
     server.close();
     server.closeAllConnections?.();
     process.exit(0);

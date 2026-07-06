@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 
-const SIGNER = process.env.NEXT_PUBLIC_SIGNER_URL ?? "http://localhost:5001";
+// Same-origin proxy path (see next.config.mjs). NEXT_PUBLIC_SIGNER_URL remains
+// as an override for direct-to-signer setups.
+const SIGNER = process.env.NEXT_PUBLIC_SIGNER_URL ?? "/api/signer";
 // Official Arc Testnet explorer (docs.arc.io → Tools): for 0x tx hashes (anchors).
 // Payment receipts are Gateway transfer UUIDs → resolved via the signer instead.
 const ARCSCAN_TX = "https://testnet.arcscan.app/tx/";
@@ -16,18 +18,34 @@ export default function Page() {
   const [ledger, setLedger] = useState<Ledger[]>([]);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [online, setOnline] = useState(true);
 
-  async function refresh() {
+  async function refresh(): Promise<boolean> {
     try {
-      const [l, a, s] = await Promise.all([
-        fetch(`${SIGNER}/ledger`).then((r) => r.json()),
-        fetch(`${SIGNER}/approvals`).then((r) => r.json()),
-        fetch(`${SIGNER}/summary`).then((r) => r.json()),
+      const responses = await Promise.all([
+        fetch(`${SIGNER}/ledger`), fetch(`${SIGNER}/approvals`), fetch(`${SIGNER}/summary`),
       ]);
-      setLedger(l); setApprovals(a); setSummary(s);
-    } catch { /* signer offline */ }
+      if (responses.some((r) => !r.ok)) throw new Error("signer unavailable");
+      const [l, a, s] = await Promise.all(responses.map((r) => r.json()));
+      setLedger(l); setApprovals(a); setSummary(s); setOnline(true);
+      return true;
+    } catch {
+      setOnline(false); // keep last-known data on screen
+      return false;
+    }
   }
-  useEffect(() => { refresh(); const t = setInterval(refresh, 2000); return () => clearInterval(t); }, []);
+
+  // Poll with backoff: 2s while healthy, 10s while the signer is unreachable.
+  useEffect(() => {
+    let stop = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = async () => {
+      const ok = await refresh();
+      if (!stop) timer = setTimeout(tick, ok ? 2000 : 10000);
+    };
+    tick();
+    return () => { stop = true; clearTimeout(timer); };
+  }, []);
 
   async function decide(id: string, decision: "approved" | "denied") {
     await fetch(`${SIGNER}/approvals/${id}/decide`, {
@@ -51,6 +69,12 @@ export default function Page() {
 
   return (
     <main>
+      {!online && (
+        <section style={{ ...card, borderColor: "#e5534b", display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#e5534b" }} />
+          <span><b>SpendGuard unreachable</b> — showing last known state, retrying every 10s…</span>
+        </section>
+      )}
       {summary && (
         <section style={card}>
           <b>Budget burn-down</b>
