@@ -16,8 +16,8 @@
     "dev:signer": "npm run dev -w packages/signer",
     "dev:agent": "npm run dev -w packages/agent",
     "dev:dashboard": "npm run dev -w packages/dashboard",
-    "serve:sellers": "npm run start -w packages/sellers",
-    "serve:signer": "npm run start -w packages/signer",
+    "serve:sellers": "npm run start:local -w packages/sellers",
+    "serve:signer": "npm run start:local -w packages/signer",
     "agent:once": "npm run once -w packages/agent",
     "pay:test": "npm run pay:test -w packages/agent",
     "typecheck": "tsc --noEmit -p packages/signer && tsc --noEmit -p packages/agent && tsc --noEmit -p packages/sellers"

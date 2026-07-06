@@ -5,10 +5,11 @@
  */
 import type { Quote, SubscriptionRecord } from "@autopilot/shared";
 
+// Deployed: SELLER_URL_<ID> points at the sellers service (private network).
 const SELLERS = [
-  { id: "A", base: `http://localhost:${process.env.SELLER_PORT_A ?? 4001}` },
-  { id: "B", base: `http://localhost:${process.env.SELLER_PORT_B ?? 4002}` },
-  { id: "C", base: `http://localhost:${process.env.SELLER_PORT_C ?? 4003}` },
+  { id: "A", base: process.env.SELLER_URL_A ?? `http://localhost:${process.env.SELLER_PORT_A ?? 4001}` },
+  { id: "B", base: process.env.SELLER_URL_B ?? `http://localhost:${process.env.SELLER_PORT_B ?? 4002}` },
+  { id: "C", base: process.env.SELLER_URL_C ?? `http://localhost:${process.env.SELLER_PORT_C ?? 4003}` },
 ];
 
 export async function getQuotes(expectedCalls: number): Promise<Quote[]> {

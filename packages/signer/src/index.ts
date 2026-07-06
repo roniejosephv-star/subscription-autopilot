@@ -27,8 +27,8 @@ import { dcwDeposit } from "./dcw-chain.js";
 
 const CIRCLE_MODE = () => process.env.SIGNER_MODE === "circle";
 
-// Default 5001, NOT 5000 — macOS AirPlay Receiver squats on 5000.
-const PORT = Number(process.env.SIGNER_PORT ?? 5001);
+// PORT (injected by Railway/Render) wins; default 5001, NOT 5000 — macOS AirPlay squats on 5000.
+const PORT = Number(process.env.PORT ?? process.env.SIGNER_PORT ?? 5001);
 const APPROVAL_WAIT_MS = Number(process.env.APPROVAL_WAIT_MS ?? 60_000);
 
 function requireKey(): `0x${string}` {

@@ -35,6 +35,9 @@ export function startSeller(cfg: SellerConfig): void {
   });
 
   /** Free quote endpoint — the agent's research/negotiation surface. */
+  // Self base URL for the paid endpoint we advertise in quotes.
+  // Locally: localhost. Deployed: SELLER_URL_<ID> (e.g. http://sellers.railway.internal:4001)
+  const selfBase = process.env[`SELLER_URL_${cfg.id}`] ?? `http://localhost:${cfg.port}`;
   app.get("/quote", (req, res) => {
     const expectedCalls = Number(req.query.expectedCalls ?? 0);
     res.json({
@@ -43,7 +46,7 @@ export function startSeller(cfg: SellerConfig): void {
       serviceId: "fx-rates",
       priceUsd: currentPriceUsd(cfg, expectedCalls).toFixed(6),
       tier: expectedCalls > 0 ? `volume@${expectedCalls}` : "base",
-      url: `http://localhost:${cfg.port}/data`,
+      url: `${selfBase}/data`,
     });
   });
 
