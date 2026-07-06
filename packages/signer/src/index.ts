@@ -1,0 +1,202 @@
+/**
+ * SPENDGUARD — the policy-gated payment authority.
+ *
+ * Custody separation invariant: the agent process holds NO key material and cannot
+ * produce a valid payment. It POSTs a payment *request* here; this service runs the
+ * policy chain (policy.ts), optionally holds for human approval, and only then
+ * executes the x402 payment via Circle's SDK.
+ *
+ * v1 payment path: GatewayClient (verified SDK surface) with lifecycle hooks as the
+ * enforcement point — hooks run in THIS trusted process, not the agent's.
+ * v2 upgrade path (F8): SIGNER_MODE=circle signs EIP-712 via Circle Wallets DCW EOA
+ * (see circle-wallet.ts + /sign endpoint) so no raw key exists anywhere.
+ */
+import express from "express";
+import { GatewayClient } from "@circle-fin/x402-batching/client";
+import { fromAtomic, type PayResult } from "@autopilot/shared";
+import { evaluate } from "./policy.js";
+import {
+  createApproval, decideApproval, getApproval, getPolicy, logLedger,
+  pendingApprovals, recentLedger, setPolicy,
+} from "./store.js";
+import { anchorPolicyHash } from "./anchor.js";
+import { circleSignTypedData } from "./circle-wallet.js";
+
+const PORT = Number(process.env.SIGNER_PORT ?? 5000);
+const APPROVAL_WAIT_MS = Number(process.env.APPROVAL_WAIT_MS ?? 60_000);
+
+function requireKey(): `0x${string}` {
+  const pk = process.env.SIGNER_FALLBACK_PRIVATE_KEY as `0x${string}` | undefined;
+  if (!pk) throw new Error("SIGNER_FALLBACK_PRIVATE_KEY missing (Day-0 path). See .env.example");
+  return pk;
+}
+
+function newClient(): GatewayClient {
+  return new GatewayClient({ chain: "arcTestnet", privateKey: requireKey() });
+}
+
+async function waitForApproval(id: string): Promise<"approved" | "denied" | "timeout"> {
+  const deadline = Date.now() + APPROVAL_WAIT_MS;
+  while (Date.now() < deadline) {
+    const a = getApproval(id);
+    if (a && a.status !== "pending") return a.status as "approved" | "denied";
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  return "timeout";
+}
+
+const app = express();
+app.use(express.json());
+app.use((_req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  next();
+});
+app.options("*", (_req, res) => res.sendStatus(204));
+
+/** The core endpoint: execute a policy-governed x402 payment. */
+app.post("/pay", async (req, res) => {
+  const { url, serviceId, sellerId, reason } = req.body as {
+    url?: string; serviceId?: string; sellerId?: string; reason?: string;
+  };
+  if (!url || !serviceId || !sellerId || !reason) {
+    return res.status(400).json({ error: "url, serviceId, sellerId, reason are required" });
+  }
+
+  const client = newClient();
+
+  client.onBeforePaymentCreation(async (ctx) => {
+    const amountAtomic = BigInt(ctx.selectedRequirements.amount);
+    const payTo = ctx.selectedRequirements.payTo;
+    const verdict = evaluate({ serviceId, sellerId, payTo, amountAtomic });
+
+    if (verdict.decision === "deny") {
+      logLedger({ serviceId, sellerId, payTo, amountAtomic: amountAtomic.toString(), decision: "deny", code: verdict.code, reason });
+      return { abort: true as const, reason: `${verdict.code}: ${verdict.reason}` };
+    }
+
+    if (verdict.decision === "hold") {
+      const holdId = createApproval({ serviceId, sellerId, amountAtomic: amountAtomic.toString(), reason });
+      logLedger({ serviceId, sellerId, payTo, amountAtomic: amountAtomic.toString(), decision: "hold", reason });
+      const outcome = await waitForApproval(holdId);
+      if (outcome !== "approved") {
+        const code = outcome === "denied" ? "approval_denied" : "approval_timeout";
+        logLedger({ serviceId, sellerId, payTo, amountAtomic: amountAtomic.toString(), decision: "deny", code, reason });
+        return { abort: true as const, reason: `${code}: human approval ${outcome}` };
+      }
+    }
+    // allow → fall through, SDK signs & attaches payment
+  });
+
+  try {
+    const result = await client.pay(url);
+    logLedger({
+      serviceId, sellerId, payTo: "",
+      amountAtomic: result.amount.toString(), decision: "allow",
+      transaction: result.transaction, reason,
+    });
+    const ok: PayResult = {
+      ok: true, status: result.status,
+      amountAtomic: result.amount.toString(),
+      formattedAmount: result.formattedAmount,
+      transaction: result.transaction, data: result.data,
+    };
+    return res.json(ok);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Aborted-by-policy surfaces as a pay() error carrying our "code: reason" prefix;
+    // classify it so the agent gets a structured denial and can re-plan.
+    const KNOWN = [
+      "monthly_budget_exceeded", "per_service_cap_exceeded", "per_tx_max_exceeded",
+      "daily_velocity_exceeded", "seller_not_allowlisted", "approval_denied", "approval_timeout",
+    ] as const;
+    const code = KNOWN.find((c) => message.includes(c));
+    if (code) {
+      return res.status(402).json({ ok: false, denied: true, code, reason: message } satisfies PayResult);
+    }
+    // Not a policy denial — infrastructure/SDK error (e.g. insufficient Gateway balance).
+    return res.status(502).json({ error: message });
+  }
+});
+
+/** One-time Gateway deposit (first run). Amount in decimal USDC. */
+app.post("/deposit", async (req, res) => {
+  const { amount } = req.body as { amount?: string };
+  if (!amount) return res.status(400).json({ error: "amount required" });
+  try {
+    const result = await newClient().deposit(amount);
+    return res.json({ depositTxHash: result.depositTxHash, amount: result.formattedAmount });
+  } catch (err) {
+    return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+app.get("/balances", async (_req, res) => {
+  try {
+    const b = await newClient().getBalances();
+    res.json({ wallet: b.wallet.formatted, gatewayAvailable: b.gateway.formattedAvailable, gatewayTotal: b.gateway.formattedTotal });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+app.get("/policies", (_req, res) => res.json(getPolicy()));
+
+app.post("/policies", async (req, res) => {
+  setPolicy(req.body);
+  const anchorTx = await anchorPolicyHash(JSON.stringify(req.body)).catch(() => null);
+  res.json({ ok: true, anchorTx });
+});
+
+app.get("/approvals", (_req, res) => res.json(pendingApprovals()));
+
+app.post("/approvals/:id/decide", (req, res) => {
+  const { decision } = req.body as { decision?: "approved" | "denied" };
+  if (decision !== "approved" && decision !== "denied") return res.status(400).json({ error: "decision must be approved|denied" });
+  decideApproval(req.params.id, decision);
+  res.json({ ok: true });
+});
+
+app.get("/ledger", (_req, res) => res.json(recentLedger()));
+
+app.get("/summary", (_req, res) => {
+  const entries = recentLedger(1000);
+  const spent = entries.filter((e) => e.decision === "allow" && e.transaction).reduce((s, e) => s + BigInt(e.amountAtomic), 0n);
+  res.json({
+    spentThisWindow: fromAtomic(spent),
+    payments: entries.filter((e) => e.decision === "allow" && e.transaction).length,
+    denials: entries.filter((e) => e.decision === "deny").length,
+    holds: entries.filter((e) => e.decision === "hold").length,
+    policy: getPolicy(),
+  });
+});
+
+/**
+ * F8 upgrade path — remote BatchEvmSigner endpoint (SIGNER_MODE=circle).
+ * The agent-side remote-signer.ts calls this instead of holding any key.
+ * DAY-1 SPIKE: verify Gateway accepts the DCW-EOA signature end-to-end.
+ */
+app.post("/sign", async (req, res) => {
+  if (process.env.SIGNER_MODE !== "circle") {
+    return res.status(409).json({ error: "SIGNER_MODE is not 'circle' — /sign disabled; use /pay" });
+  }
+  try {
+    // NOTE: policy is enforced here too — parse value/payTo from the EIP-3009 message.
+    const { typedData, serviceId, sellerId, reason } = req.body;
+    const msg = typedData?.message ?? {};
+    const verdict = evaluate({
+      serviceId: serviceId ?? "unknown", sellerId: sellerId ?? "unknown",
+      payTo: String(msg.to ?? ""), amountAtomic: BigInt(msg.value ?? 0),
+    });
+    if (verdict.decision !== "allow") {
+      return res.status(403).json({ denied: true, code: verdict.code, reason: verdict.reason ?? reason });
+    }
+    const signature = await circleSignTypedData(typedData);
+    return res.json({ signature });
+  } catch (err) {
+    return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+app.listen(PORT, () => console.log(`[spendguard] listening on :${PORT} (mode=${process.env.SIGNER_MODE ?? "local"})`));

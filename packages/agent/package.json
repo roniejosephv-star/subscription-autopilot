@@ -1,0 +1,21 @@
+{
+  "name": "@autopilot/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/index.ts",
+    "once": "tsx --env-file=../../.env src/index.ts --once",
+    "inject": "tsx --env-file=../../.env src/index.ts --inject",
+    "pay:test": "tsx --env-file=../../.env src/index.ts --pay-test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "@autopilot/shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.3"
+  }
+}

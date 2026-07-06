@@ -1,0 +1,28 @@
+{
+  "name": "subscription-autopilot",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI agent that runs your recurring x402 service spending on Arc — re-shops at renewal, pays via gasless USDC nanopayments, governed by an out-of-process policy-gated signer (SpendGuard).",
+  "license": "Apache-2.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "generate-wallet": "node scripts/generate-wallet.mjs",
+    "dev:sellers": "npm run dev -w packages/sellers",
+    "dev:signer": "npm run dev -w packages/signer",
+    "dev:agent": "npm run dev -w packages/agent",
+    "dev:dashboard": "npm run dev -w packages/dashboard",
+    "agent:once": "npm run once -w packages/agent",
+    "pay:test": "npm run pay:test -w packages/agent",
+    "typecheck": "tsc --noEmit -p packages/signer && tsc --noEmit -p packages/agent && tsc --noEmit -p packages/sellers"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.3"
+  }
+}
