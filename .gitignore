@@ -10,6 +10,8 @@ dist/
 out/
 contracts/out/
 contracts/cache/
+contracts/lib/
+contracts/broadcast/
 .DS_Store
 data/*.json
 !data/.gitkeep

@@ -20,7 +20,7 @@ import {
   createApproval, decideApproval, getApproval, getPolicy, logLedger,
   pendingApprovals, recentLedger, setPolicy,
 } from "./store.js";
-import { anchorPolicyHash } from "./anchor.js";
+import { anchorPolicyHash, commitEpochOnChain } from "./anchor.js";
 import { circleSignTypedData } from "./circle-wallet.js";
 import { dcwPay, PolicyDeniedError } from "./dcw-pay.js";
 import { dcwDeposit } from "./dcw-chain.js";
@@ -201,6 +201,31 @@ app.post("/approvals/:id/decide", (req, res) => {
 });
 
 app.get("/ledger", (_req, res) => res.json(recentLedger()));
+
+/** Gateway transfer status lookup — payment "receipts" are transfer UUIDs, not chain txs. */
+app.get("/transfers/:id", async (req, res) => {
+  try {
+    const t = await newClient().getTransferById(req.params.id);
+    res.json(t);
+  } catch (err) {
+    res.status(404).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+/** Anchor a spend epoch on Arc (F9): ledger snapshot root + total spent. */
+app.post("/epochs/commit", async (_req, res) => {
+  try {
+    const entries = recentLedger(1000);
+    const total = entries
+      .filter((e) => e.decision === "allow" && e.transaction)
+      .reduce((s, e) => s + BigInt(e.amountAtomic), 0n);
+    const result = await commitEpochOnChain(JSON.stringify(entries), total);
+    if (!result) return res.status(409).json({ error: "ANCHOR_CONTRACT_ADDRESS not configured" });
+    res.json({ ...result, totalSpentAtomic: total.toString(), explorer: `https://testnet.arcscan.app/tx/${result.tx}` });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
 
 app.get("/summary", (_req, res) => {
   const entries = recentLedger(1000);

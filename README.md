@@ -96,8 +96,9 @@ open http://localhost:3000                         # 4. burn-down, savings, rece
 - [x] Scaffold: all services, policy engine, approval queue, re-shop, dashboard, contract
 - [x] **Day 0:** `verify-day0.sh` E2E on Arc Testnet (kill criterion cleared)
 - [x] Day 1: DCW-EOA signing verified against Gateway settle E2E (`SIGNER_MODE=circle`) — including DCW-native Gateway deposit via contract-execution API
-- [ ] Day 4: `SpendAnchor` deployed; anchoring wired into policy changes + epochs
-- [ ] Day 6: deploy, 3-min video, submission
+- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xfe18f3c42f9318f20cae9cd5b2983e229554e435`](https://testnet.arcscan.app/address/0xfe18f3c42f9318f20cae9cd5b2983e229554e435) — policy hashes anchored on every update, spend epochs via `POST /epochs/commit`; deployed with `scripts/deploy-anchor.mjs` (solc + viem, no Foundry required)
+- [x] All four demo beats rehearsed: autonomous metering, 21.9% re-shop switch, injection denied at per-tx wall, human approval hold/release
+- [ ] Deploy public demo URL, architecture diagram, 3-min video, submission
 
 ## License
 

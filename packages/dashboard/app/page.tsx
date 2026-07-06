@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 
-const SIGNER = process.env.NEXT_PUBLIC_SIGNER_URL ?? "http://localhost:5000";
-const ARCSCAN_TX = "https://testnet.arcscan.net/tx/"; // verify explorer host Day 4
+const SIGNER = process.env.NEXT_PUBLIC_SIGNER_URL ?? "http://localhost:5001";
+// Official Arc Testnet explorer (docs.arc.io → Tools): for 0x tx hashes (anchors).
+// Payment receipts are Gateway transfer UUIDs → resolved via the signer instead.
+const ARCSCAN_TX = "https://testnet.arcscan.app/tx/";
 
 interface Ledger { id: number; ts: string; serviceId: string; sellerId: string; amountAtomic: string; decision: string; code?: string; transaction?: string; reason: string }
 interface Approval { id: string; ts: string; serviceId: string; sellerId: string; amountAtomic: string; reason: string }
@@ -32,6 +34,17 @@ export default function Page() {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ decision }),
     });
     refresh();
+  }
+
+  const [receiptStatus, setReceiptStatus] = useState<Record<string, string>>({});
+  async function checkReceipt(id: string) {
+    setReceiptStatus((s) => ({ ...s, [id]: "…" }));
+    try {
+      const t = await fetch(`${SIGNER}/transfers/${id}`).then((r) => r.json());
+      setReceiptStatus((s) => ({ ...s, [id]: t.status ?? "unknown" }));
+    } catch {
+      setReceiptStatus((s) => ({ ...s, [id]: "lookup failed" }));
+    }
   }
 
   const pct = summary ? Math.min(100, (Number(summary.spentThisWindow) / Number(summary.policy.monthlyBudget)) * 100) : 0;
@@ -75,7 +88,12 @@ export default function Page() {
                   {e.decision}{e.code ? ` (${e.code})` : ""}
                 </td>
                 <td>{e.transaction
-                  ? <a style={{ color: "#7aa7ff" }} href={`${ARCSCAN_TX}${e.transaction}`} target="_blank">receipt</a>
+                  ? e.transaction.startsWith("0x")
+                    ? <a style={{ color: "#7aa7ff" }} href={`${ARCSCAN_TX}${e.transaction}`} target="_blank">arcscan</a>
+                    : <button style={{ background: "none", border: 0, color: "#7aa7ff", cursor: "pointer", padding: 0 }}
+                        onClick={() => checkReceipt(e.transaction!)}>
+                        {receiptStatus[e.transaction] ? `gateway: ${receiptStatus[e.transaction]}` : "receipt"}
+                      </button>
                   : <span style={{ opacity: 0.7 }}>{e.reason.slice(0, 60)}</span>}
                 </td>
               </tr>

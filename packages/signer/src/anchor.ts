@@ -22,7 +22,7 @@ function arcTestnetChain() {
   });
 }
 
-export async function anchorPolicyHash(policyJson: string): Promise<string | null> {
+function anchorClient() {
   const address = process.env.ANCHOR_CONTRACT_ADDRESS as `0x${string}` | undefined;
   const pk = process.env.SIGNER_FALLBACK_PRIVATE_KEY as `0x${string}` | undefined;
   if (!address || !pk) return null;
@@ -31,7 +31,25 @@ export async function anchorPolicyHash(policyJson: string): Promise<string | nul
     chain: arcTestnetChain(),
     transport: http(),
   }).extend(publicActions);
+  return { client, address };
+}
+
+export async function anchorPolicyHash(policyJson: string): Promise<string | null> {
+  const a = anchorClient();
+  if (!a) return null;
   const hash = keccak256(toHex(policyJson));
-  const tx = await client.writeContract({ address, abi: ANCHOR_ABI, functionName: "anchorPolicy", args: [hash] });
-  return tx;
+  return a.client.writeContract({ address: a.address, abi: ANCHOR_ABI, functionName: "anchorPolicy", args: [hash] });
+}
+
+/** Commit a spend epoch: root = hash of the ledger snapshot, plus total spent. */
+export async function commitEpochOnChain(ledgerSnapshotJson: string, totalSpentAtomic: bigint): Promise<{ tx: string; epoch: number; spendRoot: string } | null> {
+  const a = anchorClient();
+  if (!a) return null;
+  const epoch = Math.floor(Date.now() / 1000);
+  const spendRoot = keccak256(toHex(ledgerSnapshotJson));
+  const tx = await a.client.writeContract({
+    address: a.address, abi: ANCHOR_ABI, functionName: "commitEpoch",
+    args: [BigInt(epoch), spendRoot, totalSpentAtomic],
+  });
+  return { tx, epoch, spendRoot };
 }
