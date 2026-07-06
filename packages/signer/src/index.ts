@@ -11,6 +11,7 @@
  * v2 upgrade path (F8): SIGNER_MODE=circle signs EIP-712 via Circle Wallets DCW EOA
  * (see circle-wallet.ts + /sign endpoint) so no raw key exists anywhere.
  */
+import "./env.js";
 import express from "express";
 import { GatewayClient } from "@circle-fin/x402-batching/client";
 import { fromAtomic, type PayResult } from "@autopilot/shared";
@@ -21,8 +22,13 @@ import {
 } from "./store.js";
 import { anchorPolicyHash } from "./anchor.js";
 import { circleSignTypedData } from "./circle-wallet.js";
+import { dcwPay, PolicyDeniedError } from "./dcw-pay.js";
+import { dcwDeposit } from "./dcw-chain.js";
 
-const PORT = Number(process.env.SIGNER_PORT ?? 5000);
+const CIRCLE_MODE = () => process.env.SIGNER_MODE === "circle";
+
+// Default 5001, NOT 5000 — macOS AirPlay Receiver squats on 5000.
+const PORT = Number(process.env.SIGNER_PORT ?? 5001);
 const APPROVAL_WAIT_MS = Number(process.env.APPROVAL_WAIT_MS ?? 60_000);
 
 function requireKey(): `0x${string}` {
@@ -33,6 +39,33 @@ function requireKey(): `0x${string}` {
 
 function newClient(): GatewayClient {
   return new GatewayClient({ chain: "arcTestnet", privateKey: requireKey() });
+}
+
+/**
+ * The policy gate — shared by both signing modes. Runs the rule chain, parks
+ * over-threshold payments in the approval queue, and throws a structured
+ * PolicyDeniedError when the payment must not happen. No pass, no signature.
+ */
+function makePolicyGate(serviceId: string, sellerId: string, reason: string) {
+  return async (amountAtomic: bigint, payTo: string): Promise<void> => {
+    const verdict = evaluate({ serviceId, sellerId, payTo, amountAtomic });
+
+    if (verdict.decision === "deny") {
+      logLedger({ serviceId, sellerId, payTo, amountAtomic: amountAtomic.toString(), decision: "deny", code: verdict.code, reason });
+      throw new PolicyDeniedError(verdict.code!, verdict.reason ?? "denied by policy");
+    }
+
+    if (verdict.decision === "hold") {
+      const holdId = createApproval({ serviceId, sellerId, amountAtomic: amountAtomic.toString(), reason });
+      logLedger({ serviceId, sellerId, payTo, amountAtomic: amountAtomic.toString(), decision: "hold", reason });
+      const outcome = await waitForApproval(holdId);
+      if (outcome !== "approved") {
+        const code = outcome === "denied" ? "approval_denied" : "approval_timeout";
+        logLedger({ serviceId, sellerId, payTo, amountAtomic: amountAtomic.toString(), decision: "deny", code, reason });
+        throw new PolicyDeniedError(code, `human approval ${outcome}`);
+      }
+    }
+  };
 }
 
 async function waitForApproval(id: string): Promise<"approved" | "denied" | "timeout"> {
@@ -64,46 +97,49 @@ app.post("/pay", async (req, res) => {
     return res.status(400).json({ error: "url, serviceId, sellerId, reason are required" });
   }
 
-  const client = newClient();
-
-  client.onBeforePaymentCreation(async (ctx) => {
-    const amountAtomic = BigInt(ctx.selectedRequirements.amount);
-    const payTo = ctx.selectedRequirements.payTo;
-    const verdict = evaluate({ serviceId, sellerId, payTo, amountAtomic });
-
-    if (verdict.decision === "deny") {
-      logLedger({ serviceId, sellerId, payTo, amountAtomic: amountAtomic.toString(), decision: "deny", code: verdict.code, reason });
-      return { abort: true as const, reason: `${verdict.code}: ${verdict.reason}` };
-    }
-
-    if (verdict.decision === "hold") {
-      const holdId = createApproval({ serviceId, sellerId, amountAtomic: amountAtomic.toString(), reason });
-      logLedger({ serviceId, sellerId, payTo, amountAtomic: amountAtomic.toString(), decision: "hold", reason });
-      const outcome = await waitForApproval(holdId);
-      if (outcome !== "approved") {
-        const code = outcome === "denied" ? "approval_denied" : "approval_timeout";
-        logLedger({ serviceId, sellerId, payTo, amountAtomic: amountAtomic.toString(), decision: "deny", code, reason });
-        return { abort: true as const, reason: `${code}: human approval ${outcome}` };
-      }
-    }
-    // allow → fall through, SDK signs & attaches payment
-  });
+  const policyGate = makePolicyGate(serviceId, sellerId, reason);
 
   try {
-    const result = await client.pay(url);
+    let result: { data: unknown; amountAtomic: string; formattedAmount: string; transaction: string; status: number };
+
+    if (CIRCLE_MODE()) {
+      // F8: signature produced by Circle Wallets (DCW EOA) — no key in our stack.
+      result = await dcwPay(url, policyGate);
+    } else {
+      // Day-0 path: local key inside SpendGuard; policy enforced via SDK hook
+      // running in THIS trusted process.
+      const client = newClient();
+      client.onBeforePaymentCreation(async (ctx) => {
+        try {
+          await policyGate(BigInt(ctx.selectedRequirements.amount), ctx.selectedRequirements.payTo);
+        } catch (e) {
+          if (e instanceof PolicyDeniedError) return { abort: true as const, reason: e.message };
+          throw e;
+        }
+      });
+      const r = await client.pay(url);
+      result = {
+        data: r.data, amountAtomic: r.amount.toString(),
+        formattedAmount: r.formattedAmount, transaction: r.transaction, status: r.status,
+      };
+    }
+
     logLedger({
       serviceId, sellerId, payTo: "",
-      amountAtomic: result.amount.toString(), decision: "allow",
+      amountAtomic: result.amountAtomic, decision: "allow",
       transaction: result.transaction, reason,
     });
     const ok: PayResult = {
       ok: true, status: result.status,
-      amountAtomic: result.amount.toString(),
+      amountAtomic: result.amountAtomic,
       formattedAmount: result.formattedAmount,
       transaction: result.transaction, data: result.data,
     };
     return res.json(ok);
   } catch (err) {
+    if (err instanceof PolicyDeniedError) {
+      return res.status(402).json({ ok: false, denied: true, code: err.code, reason: err.reason } as PayResult);
+    }
     const message = err instanceof Error ? err.message : String(err);
     // Aborted-by-policy surfaces as a pay() error carrying our "code: reason" prefix;
     // classify it so the agent gets a structured denial and can re-plan.
@@ -125,6 +161,10 @@ app.post("/deposit", async (req, res) => {
   const { amount } = req.body as { amount?: string };
   if (!amount) return res.status(400).json({ error: "amount required" });
   try {
+    if (CIRCLE_MODE()) {
+      const { approveTx, depositTx } = await dcwDeposit(amount);
+      return res.json({ depositTxHash: depositTx, approveTxHash: approveTx, amount });
+    }
     const result = await newClient().deposit(amount);
     return res.json({ depositTxHash: result.depositTxHash, amount: result.formattedAmount });
   } catch (err) {
@@ -134,7 +174,9 @@ app.post("/deposit", async (req, res) => {
 
 app.get("/balances", async (_req, res) => {
   try {
-    const b = await newClient().getBalances();
+    const b = await newClient().getBalances(
+      CIRCLE_MODE() ? (process.env.AGENT_WALLET_ADDRESS as `0x${string}`) : undefined,
+    );
     res.json({ wallet: b.wallet.formatted, gatewayAvailable: b.gateway.formattedAvailable, gatewayTotal: b.gateway.formattedTotal });
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -199,4 +241,26 @@ app.post("/sign", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`[spendguard] listening on :${PORT} (mode=${process.env.SIGNER_MODE ?? "local"})`));
+const server = app.listen(PORT, () =>
+  console.log(`[spendguard] listening on :${PORT} (mode=${process.env.SIGNER_MODE ?? "local"})`),
+);
+server.on("error", (err: NodeJS.ErrnoException) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(
+      `[spendguard] port ${PORT} is already in use.\n` +
+      `  → another signer instance running? (lsof -i :${PORT})\n` +
+      `  → note: macOS AirPlay owns port 5000 — keep SIGNER_PORT=5001`,
+    );
+    process.exit(1);
+  }
+  throw err;
+});
+
+/** Exit immediately on interrupt so tsx never has to force-kill. */
+for (const sig of ["SIGINT", "SIGTERM"] as const) {
+  process.once(sig, () => {
+    server.close();
+    server.closeAllConnections?.();
+    process.exit(0);
+  });
+}

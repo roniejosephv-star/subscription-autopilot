@@ -24,13 +24,31 @@ async function client() {
   return sdk;
 }
 
+/**
+ * Circle's typed-data validator requires an explicit EIP712Domain entry in
+ * `types`. viem-style callers (BatchEvmScheme) omit it, which makes Circle
+ * reject with "extra data provided in the message (0 < 4)". Add it if missing.
+ */
+function withDomainType(typedData: unknown): unknown {
+  const td = typedData as { domain?: Record<string, unknown>; types?: Record<string, unknown> };
+  if (!td?.domain || !td?.types || td.types.EIP712Domain) return typedData;
+  const fieldTypes: Record<string, string> = {
+    name: "string", version: "string", chainId: "uint256",
+    verifyingContract: "address", salt: "bytes32",
+  };
+  const EIP712Domain = ["name", "version", "chainId", "verifyingContract", "salt"]
+    .filter((k) => td.domain![k] !== undefined)
+    .map((k) => ({ name: k, type: fieldTypes[k] }));
+  return { ...td, types: { EIP712Domain, ...td.types } };
+}
+
 export async function circleSignTypedData(typedData: unknown): Promise<`0x${string}`> {
   const walletId = process.env.AGENT_WALLET_ID;
   if (!walletId) throw new Error("AGENT_WALLET_ID missing — run `npm run generate-wallet`");
   const c = await client();
   const response = await c.signTypedData({
     walletId,
-    data: JSON.stringify(typedData, (_k, v) => (typeof v === "bigint" ? v.toString() : v)),
+    data: JSON.stringify(withDomainType(typedData), (_k, v) => (typeof v === "bigint" ? v.toString() : v)),
   });
   const signature = (response as { data?: { signature?: string } }).data?.signature;
   if (!signature) throw new Error("Circle signTypedData returned no signature");

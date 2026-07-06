@@ -4,9 +4,21 @@
  * demo price-drift take effect live) and settle-side audit hooks.
  */
 import express from "express";
+import type { Server } from "node:http";
 import { formatUnits } from "viem";
 import { createGatewayMiddleware } from "@circle-fin/x402-batching/server";
 import { currentPriceUsd, priceString, type SellerConfig } from "./pricing.js";
+
+const servers: Server[] = [];
+
+/** Close all listeners immediately on interrupt so tsx never has to force-kill. */
+for (const sig of ["SIGINT", "SIGTERM"] as const) {
+  process.once(sig, () => {
+    for (const s of servers) s.close();
+    for (const s of servers) s.closeAllConnections?.();
+    process.exit(0);
+  });
+}
 
 type PaidRequest = express.Request & {
   payment?: { verified: boolean; payer: string; amount: string; network: string; transaction?: string };
@@ -53,7 +65,17 @@ export function startSeller(cfg: SellerConfig): void {
     });
   });
 
-  app.listen(cfg.port, () => console.log(`[seller ${cfg.id}] ${cfg.name} on :${cfg.port} base=$${cfg.basePriceUsd.toFixed(6)}/call`));
+  const server = app.listen(cfg.port, () =>
+    console.log(`[seller ${cfg.id}] ${cfg.name} on :${cfg.port} base=$${cfg.basePriceUsd.toFixed(6)}/call`),
+  );
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`[seller ${cfg.id}] port ${cfg.port} in use — orphaned instance? (lsof -ti :${cfg.port} | xargs kill)`);
+      process.exit(1);
+    }
+    throw err;
+  });
+  servers.push(server);
 }
 
 /** Settle-side audit log (F10). Runs after middleware verified+settled. */

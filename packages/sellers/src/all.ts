@@ -1,3 +1,4 @@
+import "./env.js";
 import { startSeller } from "./server.js";
 import { sellerConfigs } from "./pricing.js";
 

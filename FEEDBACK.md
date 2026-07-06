@@ -12,9 +12,14 @@
 5. **Undocumented header in shipped types:** `X-ARC-PRIVATE-MAINNET-ENABLED` (reveals Arc mainnet `eip155:5042` pre-GA) appears in the SDK's `.d.ts` but nowhere in docs.
 6. **Hook documentation lives off-site:** the x402 lifecycle hooks (the SDK's best extension surface — we built our whole policy layer on them) are documented on x402.org, not developers.circle.com. Mirror or link prominently.
 7. **Broken script in arc-fintech sample:** `package.json` declares `spend:gateway:arc` → `scripts/spend-arc-gateway-usdc.mjs`, which doesn't exist in the repo.
+8. **Interop wart between Circle Wallets and the x402 SDK (found Day 1, 2026-07-06):** `signTypedData` in the Wallets API requires an explicit `EIP712Domain` entry in `types`, but viem-style callers — including `BatchEvmScheme`'s signer interface in Circle's own x402 SDK — omit it by convention. The result is a rejection with `"there is extra data provided in the message (0 < 4)"`, which names neither the missing type nor the fix. Suggest: accept viem-normalized typed data, or at least return "types.EIP712Domain is required".
+9. **`GatewayClient.deposit()` requires a raw private key**, so DCW-custodied wallets can't use it. Workaround (verified): replicate its two calls (`USDC.approve`, `GatewayWallet.deposit(token, amount)`) via `createContractExecutionTransaction`. Suggest a documented DCW-native deposit path — agentic use cases will want Circle-custodied buyers.
 
 ## What worked well
-*(fill during build — e.g., 2-line seller monetization via `gateway.require()`, `CHAIN_CONFIGS` exports, transfer search API)*
+- DCW EOA `signTypedData` signatures are fully ecrecover-compatible with Gateway's x402 settle — the whole custody-separation design works E2E on Arc Testnet (verified 2026-07-06, transfer `9bd6a149-1821-4341-a4aa-712cdc362382`)
+- Seller monetization is genuinely 2 lines (`createGatewayMiddleware` + `gateway.require()`); per-request dynamic pricing works by binding `require(price)` at call time
+- `CHAIN_CONFIGS` exports killed all address hardcoding
+- Arc deposit finality (~0.5s) makes the deposit→pay loop feel instant; contract executions via the Wallets API confirmed in well under a minute
 
 ## What could be improved
 *(fill during build)*

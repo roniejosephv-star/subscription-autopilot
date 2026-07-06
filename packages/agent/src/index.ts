@@ -11,6 +11,7 @@
  * LLM planning (tools.ts) activates when ANTHROPIC_API_KEY is set; the
  * deterministic path below keeps the demo reproducible without it.
  */
+import "./env.js";
 import { pay, deposit, balances } from "./signer-client.js";
 import { getQuotes, reshop } from "./reshop.js";
 import * as subs from "./subscriptions.js";
