@@ -94,9 +94,17 @@ async function main(): Promise<void> {
   }
 
   console.log(`[agent] loop: tick every ${TICK_MS}ms, renewal period ${subs.RENEWAL_PERIOD_MS}ms`);
+  let running = true;
+  process.on("SIGINT", () => {
+    console.log("\n[agent] shutting down…");
+    running = false;
+  });
+
   for (;;) {
+    if (!running) break;
     await useServices().catch((e) => console.error("[agent] tick error:", e.message));
     await processRenewals().catch((e) => console.error("[agent] renewal error:", e.message));
+    if (!running) break;
     await new Promise((r) => setTimeout(r, TICK_MS));
   }
 }

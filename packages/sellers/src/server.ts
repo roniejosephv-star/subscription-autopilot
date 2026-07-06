@@ -49,10 +49,17 @@ export function startSeller(cfg: SellerConfig): void {
   /**
    * Paid endpoint. Price is re-resolved on EVERY request (dynamic pricing):
    * gateway.require(price) is bound at call time, not boot time.
+   * Special tiers for the demo's policy beats:
+   *   ?unlimited=true → $0.50/call  (exceeds per-tx max → SpendGuard hard-denies; beat 3)
+   *   ?premium=true   → $0.03/call  (exceeds approval threshold → hold for human; beat 4)
    */
   app.get("/data", (req, res, next) => {
     const expectedCalls = Number(req.query.expectedCalls ?? 0);
-    gateway.require(priceString(cfg, expectedCalls))(req, res, next);
+    const price =
+      req.query.unlimited === "true" ? "$0.500000" :
+      req.query.premium === "true" ? "$0.030000" :
+      priceString(cfg, expectedCalls);
+    gateway.require(price)(req, res, next);
   }, auditHook(cfg), (req: PaidRequest, res) => {
     const { payer, amount, network } = req.payment!;
     console.log(`[seller ${cfg.id}] paid ${formatUnits(BigInt(amount), 6)} USDC by ${payer} on ${network}`);
