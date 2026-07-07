@@ -17,8 +17,8 @@ import { GatewayClient } from "@circle-fin/x402-batching/client";
 import { fromAtomic, type PayResult } from "@autopilot/shared";
 import { evaluate } from "./policy.js";
 import {
-  createApproval, decideApproval, getApproval, getPolicy, logLedger,
-  pendingApprovals, recentLedger, setPolicy,
+  createApproval, decideApproval, getApproval, getPolicy, lastEpoch, logEpoch,
+  logLedger, pendingApprovals, recentLedger, setPolicy,
 } from "./store.js";
 import { anchorPolicyHash, commitEpochOnChain } from "./anchor.js";
 import { circleSignTypedData } from "./circle-wallet.js";
@@ -221,6 +221,7 @@ app.post("/epochs/commit", async (_req, res) => {
       .reduce((s, e) => s + BigInt(e.amountAtomic), 0n);
     const result = await commitEpochOnChain(JSON.stringify(entries), total);
     if (!result) return res.status(409).json({ error: "ANCHOR_CONTRACT_ADDRESS not configured" });
+    logEpoch({ ...result, totalSpentAtomic: total.toString() });
     res.json({ ...result, totalSpentAtomic: total.toString(), explorer: `https://testnet.arcscan.app/tx/${result.tx}` });
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -236,6 +237,7 @@ app.get("/summary", (_req, res) => {
     denials: entries.filter((e) => e.decision === "deny").length,
     holds: entries.filter((e) => e.decision === "hold").length,
     policy: getPolicy(),
+    lastEpoch: lastEpoch(),
   });
 });
 

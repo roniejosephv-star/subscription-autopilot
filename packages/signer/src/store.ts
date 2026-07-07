@@ -20,7 +20,24 @@ CREATE TABLE IF NOT EXISTS approvals (
   amountAtomic TEXT NOT NULL, reason TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending'
 );
+CREATE TABLE IF NOT EXISTS epochs (
+  epoch INTEGER PRIMARY KEY,
+  ts TEXT NOT NULL DEFAULT (datetime('now')),
+  tx TEXT NOT NULL, spendRoot TEXT NOT NULL, totalSpentAtomic TEXT NOT NULL
+);
 `);
+
+export interface EpochRecord { epoch: number; ts: string; tx: string; spendRoot: string; totalSpentAtomic: string }
+
+export function logEpoch(e: Omit<EpochRecord, "ts">): void {
+  db.prepare("INSERT OR REPLACE INTO epochs (epoch, tx, spendRoot, totalSpentAtomic) VALUES (?, ?, ?, ?)").run(
+    e.epoch, e.tx, e.spendRoot, e.totalSpentAtomic,
+  );
+}
+
+export function lastEpoch(): EpochRecord | null {
+  return (db.prepare("SELECT * FROM epochs ORDER BY epoch DESC LIMIT 1").get() as EpochRecord | undefined) ?? null;
+}
 
 export function defaultPolicy(): PolicyConfig {
   return {

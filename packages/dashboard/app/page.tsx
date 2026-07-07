@@ -10,7 +10,8 @@ const ARCSCAN = `https://testnet.arcscan.app/address/${ANCHOR}`;
 interface Ledger { id: number; ts: string; serviceId: string; sellerId: string; amountAtomic: string; decision: string; code?: string; transaction?: string; reason: string }
 interface Approval { id: string; ts: string; serviceId: string; sellerId: string; amountAtomic: string; reason: string }
 interface Policy { monthlyBudget: string; perTxMax: string; perServiceCap: string; dailyTxMax: number; approvalThreshold: string; allowlist: string[] }
-interface Summary { spentThisWindow: string; payments: number; denials: number; holds: number; policy: Policy }
+interface Epoch { epoch: number; ts: string; tx: string; spendRoot: string; totalSpentAtomic: string }
+interface Summary { spentThisWindow: string; payments: number; denials: number; holds: number; policy: Policy; lastEpoch?: Epoch | null }
 interface Balances { wallet: string; gatewayAvailable: string; gatewayTotal: string }
 interface Switch { ts: string; serviceId: string; from: string; to: string; savingsPct: number }
 
@@ -342,6 +343,9 @@ export default function Page() {
       <div style={{ display: "flex", alignItems: "center", gap: 18, height: 26, padding: "0 14px", background: "#0b1020", borderTop: "1px solid #1c2440", font: `11px ${mono}`, color: "#566083", flexShrink: 0 }}>
         <span style={{ color: statusColor }}>● {statusText}</span>
         <span>SpendAnchor <a href={ARCSCAN} target="_blank" style={{ color: "#566083", textDecoration: "underline" }}>0xfe18…e435</a></span>
+        {summary?.lastEpoch && (
+          <span>epoch #{summary.lastEpoch.epoch} committed <a href={`https://testnet.arcscan.app/tx/${summary.lastEpoch.tx}`} target="_blank" style={{ color: "#566083", textDecoration: "underline" }}>↗</a></span>
+        )}
         {summary && <span>{summary.payments} payments settled</span>}
         <div style={{ flex: 1 }} />
         <span>agent: zero key material</span>
