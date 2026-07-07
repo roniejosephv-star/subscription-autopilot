@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 // Same-origin proxy path (see next.config.mjs). NEXT_PUBLIC_SIGNER_URL remains
 // as an override for direct-to-signer setups.
 const SIGNER = process.env.NEXT_PUBLIC_SIGNER_URL ?? "/api/signer";
-const ANCHOR = "0xfe18f3c42f9318f20cae9cd5b2983e229554e435";
+const ANCHOR = "0xf550a882da3c26fbacd1b68aa83867102206b143";
 const ARCSCAN = `https://testnet.arcscan.app/address/${ANCHOR}`;
 
 interface Ledger { id: number; ts: string; serviceId: string; sellerId: string; amountAtomic: string; decision: string; code?: string; transaction?: string; reason: string }
@@ -296,7 +296,7 @@ export default function Page() {
                   ))}
                   {!policy && <div style={{ padding: "20px 0", color: "#566083", font: `12px ${mono}` }}>policy unavailable — signer offline</div>}
                   <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid #1c2440", font: `12px ${mono}`, color: "#8f9bb8", lineHeight: 2 }}>
-                    policy hash anchored on Arc → <a href={ARCSCAN} target="_blank">SpendAnchor 0xfe18…e435</a><br />
+                    policy hash anchored on Arc → <a href={ARCSCAN} target="_blank">SpendAnchor 0xf550…b143</a><br />
                     spend epochs: commitEpoch(n, root, spent) · tamper-evident audit
                   </div>
                 </div>
@@ -342,7 +342,7 @@ export default function Page() {
       {/* ===== Status bar ===== */}
       <div style={{ display: "flex", alignItems: "center", gap: 18, height: 26, padding: "0 14px", background: "#0b1020", borderTop: "1px solid #1c2440", font: `11px ${mono}`, color: "#566083", flexShrink: 0 }}>
         <span style={{ color: statusColor }}>● {statusText}</span>
-        <span>SpendAnchor <a href={ARCSCAN} target="_blank" style={{ color: "#566083", textDecoration: "underline" }}>0xfe18…e435</a></span>
+        <span>SpendAnchor <a href={ARCSCAN} target="_blank" style={{ color: "#566083", textDecoration: "underline" }}>0xf550…b143</a></span>
         {summary?.lastEpoch && (
           <span>epoch #{summary.lastEpoch.epoch} committed <a href={`https://testnet.arcscan.app/tx/${summary.lastEpoch.tx}`} target="_blank" style={{ color: "#566083", textDecoration: "underline" }}>↗</a></span>
         )}
