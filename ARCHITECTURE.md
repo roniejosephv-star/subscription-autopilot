@@ -40,7 +40,7 @@
 
 1. **Agent ↔ SpendGuard:** the agent is untrusted (LLM, injectable). It has no keys, no Circle SDK, no chain RPC — only `POST /pay` with a stated reason. A compromised agent can *ask*; it cannot *take*.
 2. **SpendGuard ↔ chain:** policy is evaluated before any signature exists. In `SIGNER_MODE=circle` the private key doesn't exist in our stack at all — Circle Wallets holds it; SpendGuard holds only the *decision* to sign.
-3. **Auditability:** every decision (allow/hold/deny + code) is ledgered; policy hashes and epoch spend roots are event-anchored in `SpendAnchor` on Arc, so the dashboard's story is externally verifiable.
+3. **Auditability:** every decision (allow/hold/deny + code) is ledgered; policy hashes are anchored in `SpendAnchor` on Arc on every update, and SpendGuard auto-commits a spend epoch every 10 minutes when spend changed (`EPOCH_COMMIT_INTERVAL_MS`; skip-if-unchanged so every anchored epoch marks real movement). The dashboard's story is externally verifiable and cannot silently go stale.
 
 ## Payment sequence (happy path)
 

@@ -10,7 +10,7 @@ Circle's official sample shows an AI agent that *can* pay. Autopilot is an agent
 - **Negotiate** — compares volume/loyalty tiers across sellers at every renewal and switches when cheaper
 - **Execute** — gasless USDC nanopayments (x402), batch-settled by Circle Gateway on Arc
 
-…and every dollar it moves passes through **SpendGuard**, an out-of-process policy authority: budgets, allowlists, per-tx caps, velocity limits, and human approval above a threshold. The agent holds **zero key material** — it can *request* a payment; only policy can authorize one. Policy versions and spend epochs are anchored on Arc (`contracts/SpendAnchor.sol`) for tamper-evident audit.
+…and every dollar it moves passes through **SpendGuard**, an out-of-process policy authority: budgets, allowlists, per-tx caps, velocity limits, and human approval above a threshold. The agent holds **zero key material** — it can *request* a payment; only policy can authorize one. Policy versions are anchored on Arc (`contracts/SpendAnchor.sol`) on every update, and spend epochs auto-anchor every 10 minutes whenever spend changed (`EPOCH_COMMIT_INTERVAL_MS`, `0` = manual via `POST /epochs/commit`) — a tamper-evident audit trail that never goes stale.
 
 > *The agent can want anything; it can only pay what policy allows.*
 
@@ -96,7 +96,7 @@ open http://localhost:3000                         # 4. burn-down, savings, rece
 - [x] Scaffold: all services, policy engine, approval queue, re-shop, dashboard, contract
 - [x] **Day 0:** `verify-day0.sh` E2E on Arc Testnet (kill criterion cleared)
 - [x] Day 1: DCW-EOA signing verified against Gateway settle E2E (`SIGNER_MODE=circle`) — including DCW-native Gateway deposit via contract-execution API
-- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xfe18f3c42f9318f20cae9cd5b2983e229554e435`](https://testnet.arcscan.app/address/0xfe18f3c42f9318f20cae9cd5b2983e229554e435) — policy hashes anchored on every update, spend epochs via `POST /epochs/commit`; deployed with `scripts/deploy-anchor.mjs` (solc + viem, no Foundry required)
+- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xfe18f3c42f9318f20cae9cd5b2983e229554e435`](https://testnet.arcscan.app/address/0xfe18f3c42f9318f20cae9cd5b2983e229554e435) — policy hashes anchored on every update, spend epochs auto-anchored every 10 min (skip-if-unchanged; manual `POST /epochs/commit` still forces one); deployed with `scripts/deploy-anchor.mjs` (solc + viem, no Foundry required)
 - [x] All four demo beats rehearsed: autonomous metering, 21.9% re-shop switch, injection denied at per-tx wall, human approval hold/release
 - [x] Deployed: https://autopilotdashboard-production.up.railway.app (dashboard) · https://autopilotsigner-production.up.railway.app (signer API) — Railway ×4, mode=circle, volume-backed ledger
 - [ ] 3-min video + submission form
