@@ -32,3 +32,14 @@ export async function balances(): Promise<{ wallet: string; gatewayAvailable: st
   if (!res.ok) throw new Error(`balances failed: ${await res.text()}`);
   return res.json();
 }
+
+/** Ask SpendGuard to top up the Arc treasury from a source chain via CCTP. */
+export async function topUp(amount: string): Promise<{ burnTx?: string; mintTx?: string; status?: string }> {
+  const res = await fetch(`${SIGNER_URL}/treasury/topup`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ amount }),
+  });
+  if (!res.ok) throw new Error(`topup failed ${res.status}: ${await res.text()}`);
+  return res.json();
+}

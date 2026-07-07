@@ -12,7 +12,7 @@ recording — same shots, same words.
 |---|---|
 | Dashboard (demo URL) | https://autopilotdashboard-production.up.railway.app |
 | SpendGuard API | https://autopilotsigner-production.up.railway.app |
-| SpendAnchor on arcscan | https://testnet.arcscan.app/address/0xfe18f3c42f9318f20cae9cd5b2983e229554e435 |
+| SpendAnchor on arcscan | https://testnet.arcscan.app/address/0xf550a882da3c26fbacd1b68aa83867102206b143 |
 
 **Pre-flight (Claude, in Railway — before any capture)**
 

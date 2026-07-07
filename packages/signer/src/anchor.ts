@@ -1,55 +1,46 @@
 /**
  * Anchors policy hashes and spend epochs on Arc Testnet (feature F9, Day 4).
- * No-ops gracefully until ANCHOR_CONTRACT_ADDRESS is set (contract deploys Day 4).
- * Uses CHAIN_CONFIGS from the Circle SDK — no hardcoded addresses/RPC.
+ *
+ * Signing goes through the Circle DCW wallet via contract-execution
+ * (`dcw-chain.ts#contractCall`) — **no raw private key**. The same custody
+ * boundary that signs payments also signs the on-chain audit trail.
+ *
+ * No-ops gracefully when:
+ *   - ANCHOR_CONTRACT_ADDRESS is unset (contract not deployed), or
+ *   - SIGNER_MODE=local (offline dev fallback does not anchor on-chain).
  */
-import { createWalletClient, http, keccak256, toHex, defineChain, publicActions } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { CHAIN_CONFIGS } from "@circle-fin/x402-batching/client";
+import { keccak256, toHex } from "viem";
+import { contractCall } from "./dcw-chain.js";
 
-const ANCHOR_ABI = [
-  { type: "function", name: "anchorPolicy", stateMutability: "nonpayable", inputs: [{ name: "policyHash", type: "bytes32" }], outputs: [] },
-  { type: "function", name: "commitEpoch", stateMutability: "nonpayable", inputs: [{ name: "epoch", type: "uint256" }, { name: "spendRoot", type: "bytes32" }, { name: "totalSpentAtomic", type: "uint256" }], outputs: [] },
-] as const;
+const CIRCLE_MODE = () => process.env.SIGNER_MODE === "circle";
 
-function arcTestnetChain() {
-  const cfg = CHAIN_CONFIGS["arcTestnet"] as { rpcUrl?: string };
-  return defineChain({
-    id: 5042002,
-    name: "Arc Testnet",
-    nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 }, // gas is 18-decimal USDC on Arc
-    rpcUrls: { default: { http: [cfg.rpcUrl ?? ""] } },
-  });
-}
-
-function anchorClient() {
+/** The anchor contract, or null when anchoring is disabled (unset addr / local mode). */
+function anchorAddress(): `0x${string}` | null {
   const address = process.env.ANCHOR_CONTRACT_ADDRESS as `0x${string}` | undefined;
-  const pk = process.env.SIGNER_FALLBACK_PRIVATE_KEY as `0x${string}` | undefined;
-  if (!address || !pk) return null;
-  const client = createWalletClient({
-    account: privateKeyToAccount(pk),
-    chain: arcTestnetChain(),
-    transport: http(),
-  }).extend(publicActions);
-  return { client, address };
+  if (!address || !CIRCLE_MODE()) return null;
+  return address;
 }
 
 export async function anchorPolicyHash(policyJson: string): Promise<string | null> {
-  const a = anchorClient();
-  if (!a) return null;
+  const address = anchorAddress();
+  if (!address) return null;
   const hash = keccak256(toHex(policyJson));
-  return a.client.writeContract({ address: a.address, abi: ANCHOR_ABI, functionName: "anchorPolicy", args: [hash] });
+  return contractCall(address, "anchorPolicy(bytes32)", [hash]);
 }
 
 /** Commit a spend epoch: root = hash of the ledger snapshot, plus total spent. */
-export async function commitEpochOnChain(ledgerSnapshotJson: string, totalSpentAtomic: bigint): Promise<{ tx: string; epoch: number; spendRoot: string } | null> {
-  const a = anchorClient();
-  if (!a) return null;
+export async function commitEpochOnChain(
+  ledgerSnapshotJson: string,
+  totalSpentAtomic: bigint,
+): Promise<{ tx: string; epoch: number; spendRoot: string } | null> {
+  const address = anchorAddress();
+  if (!address) return null;
   const epoch = Math.floor(Date.now() / 1000);
   const spendRoot = keccak256(toHex(ledgerSnapshotJson));
-  const tx = await a.client.writeContract({
-    address: a.address, abi: ANCHOR_ABI, functionName: "commitEpoch",
-    args: [BigInt(epoch), spendRoot, totalSpentAtomic],
-  });
+  const tx = await contractCall(
+    address,
+    "commitEpoch(uint256,bytes32,uint256)",
+    [String(epoch), spendRoot, totalSpentAtomic.toString()],
+  );
   return { tx, epoch, spendRoot };
 }

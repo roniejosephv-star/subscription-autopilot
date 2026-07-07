@@ -1,9 +1,9 @@
-# Deployment — Railway (backend) + Vercel (dashboard)
+# Deployment — Railway (all four services)
 
-Topology: **3 Railway services** from this one repo (signer public, sellers + agent private-network only) and the **dashboard on Vercel**, whose server proxies `/api/signer/*` to the signer's public URL. SQLite lives on a Railway volume.
+Topology: **4 Railway services** from this one repo (signer public + dashboard public; sellers + agent private-network only). The dashboard's Next server proxies `/api/signer/*` to the signer over Railway's private network. SQLite lives on a Railway volume. Live demo: https://autopilotdashboard-production.up.railway.app
 
 ```
-Vercel dashboard ──HTTPS──▶ Railway signer (public domain, volume /data)
+Railway dashboard (public) ──proxy /api/signer/*──▶ Railway signer (public domain, volume /data)
                                    │ private network (IPv6)
                      Railway sellers (:4001-4003, no public ingress)
                      Railway agent  (no ingress) ──▶ signer + sellers via .internal
@@ -13,7 +13,7 @@ Vercel dashboard ──HTTPS──▶ Railway signer (public domain, volume /dat
 
 1. [railway.app](https://railway.app) → login with the **GitHub account that owns the repo** → New Project → **Deploy from GitHub repo** → `subscription-autopilot`.
 2. This creates one service. Rename it **`signer`** (Settings → Service name — the name becomes its private hostname `signer.railway.internal`).
-3. Add two more services from the same repo: project canvas → **+ New → GitHub Repo** (same repo) → rename **`sellers`**; repeat → rename **`agent`**.
+3. Add three more services from the same repo: project canvas → **+ New → GitHub Repo** (same repo) → rename **`sellers`**; repeat → rename **`agent`**; repeat → rename **`dashboard`**.
 
 ### Per-service settings (Settings → Deploy)
 
@@ -22,6 +22,7 @@ Vercel dashboard ──HTTPS──▶ Railway signer (public domain, volume /dat
 | signer | `npm run start -w packages/signer` | **Generate Domain** (Settings → Networking) — note the URL |
 | sellers | `npm run start -w packages/sellers` | none (private only) |
 | agent | `npm run start -w packages/agent` | none |
+| dashboard | `npm run start -w packages/dashboard` | **Generate Domain** — this is the Demo URL |
 
 Build: leave Nixpacks defaults (root `npm ci`, workspaces install everything).
 
@@ -41,7 +42,7 @@ AGENT_WALLET_ADDRESS=0x7dbffb7d8ad2df227cff3d5d1846ae8f85d16346
 SIGNER_FALLBACK_PRIVATE_KEY=<yours>
 SIGNER_DB=/data/spendguard.db
 GATEWAY_FACILITATOR_URL=https://gateway-api-testnet.circle.com
-ANCHOR_CONTRACT_ADDRESS=0xfe18f3c42f9318f20cae9cd5b2983e229554e435
+ANCHOR_CONTRACT_ADDRESS=0xf550a882da3c26fbacd1b68aa83867102206b143
 SELLER_ADDRESS_A=0xD11d8043598001ea7DB8657f6AF165BDB962a294
 SELLER_ADDRESS_B=0x3Fd8c634265cCe09590251BADEEc1052e67A4C7a
 SELLER_ADDRESS_C=0xD3F15Ee24F10d9AcD5CF89d8F4743B413650Aff5
@@ -49,7 +50,7 @@ POLICY_MONTHLY_BUDGET=10
 POLICY_PER_SERVICE_CAP=3
 POLICY_PER_TX_MAX=0.05
 POLICY_APPROVAL_THRESHOLD=0.02
-POLICY_DAILY_TX_MAX=2000
+POLICY_DAILY_TX_MAX=500
 APPROVAL_WAIT_MS=60000
 ```
 (Railway injects `PORT`; the signer honors it.)
@@ -79,12 +80,12 @@ RENEWAL_PERIOD_MS=120000
 
 Deploy order: sellers → signer → agent (agent errors harmlessly until the others are up; it retries each tick).
 
-## 2. Vercel — dashboard
+## 2. Railway — dashboard
 
-1. [vercel.com](https://vercel.com) → Add New → Project → import `subscription-autopilot`.
-2. **Root Directory: `packages/dashboard`** (critical). Framework auto-detects Next.js.
-3. Environment variable: `SIGNER_INTERNAL_URL=https://<signer-public-domain-from-railway>` (no trailing slash).
-4. Deploy → note the `*.vercel.app` URL — **this is the submission's Demo URL**.
+1. The `dashboard` service is the 4th Railway service (added in step 1.3), deployed from the same repo.
+2. Start command: `npm run start -w packages/dashboard` (Next.js production server).
+3. Environment variable: `SIGNER_INTERNAL_URL=http://signer.railway.internal:5001` (private network; the Next server proxies `/api/signer/*` to it). A public signer domain also works if you prefer.
+4. **Generate Domain** (Settings → Networking) → the resulting `*.up.railway.app` URL is **the submission's Demo URL** (live: https://autopilotdashboard-production.up.railway.app).
 
 ## 3. Smoke test (in order)
 
@@ -93,7 +94,7 @@ Deploy order: sellers → signer → agent (agent errors harmlessly until the ot
 curl -s https://<signer-domain>/summary | head -c 200
 
 # dashboard proxy path?
-curl -s https://<dashboard>.vercel.app/api/signer/summary | head -c 200
+curl -s https://<dashboard-domain>.up.railway.app/api/signer/summary | head -c 200
 
 # then open the dashboard in a browser: live rows with fresh timestamps = agent alive
 ```
@@ -104,5 +105,5 @@ Beat checks against production: the approval flow (`curl -X POST https://<signer
 - **Private networking is IPv6-only** on Railway; Express binds `::` by default and Node fetch resolves `.internal` hostnames — no code changes needed. If sellers are unreachable from agent/signer, check all three services are in the same project + environment.
 - **SQLite on a volume** = single signer instance only (fine for the demo; noted as future work).
 - The dashboard's `/api/signer/*` proxy means the signer's CORS never matters in production.
-- Costs: Railway Hobby (~$5/mo credit) covers three tiny Node services; agent burns ~$0.5/day testnet USDC from the Gateway balance — top up via faucet + `POST /deposit` if the demo window is long.
+- Costs: Railway Hobby (~$5/mo credit) covers four tiny Node services; agent burns ~$0.5/day testnet USDC from the Gateway balance — top up via faucet + `POST /deposit` if the demo window is long.
 - `serve:*` scripts (local) still load `.env`; deployed `start` scripts read injected env only.

@@ -10,7 +10,7 @@
                                 │ /ledger /approvals        │ /summary
                                 │        (poll 2s)          │
 ┌──────────────┐   POST /pay   ┌┴───────────────────────────┴────────┐
-│ AGENT :loop  │──────────────▶│  SPENDGUARD (:5000)                 │
+│ AGENT :loop  │──────────────▶│  SPENDGUARD (:5001)                 │
 │ (no keys!)   │  {url,        │  policy chain (policy.ts):          │
 │ subscribe    │   serviceId,  │   allowlist → perTx → monthly →     │
 │ meter usage  │   reason}     │   perService → velocity → threshold │
@@ -39,8 +39,8 @@
 ## Trust boundaries
 
 1. **Agent ↔ SpendGuard:** the agent is untrusted (LLM, injectable). It has no keys, no Circle SDK, no chain RPC — only `POST /pay` with a stated reason. A compromised agent can *ask*; it cannot *take*.
-2. **SpendGuard ↔ chain:** policy is evaluated before any signature exists. In `SIGNER_MODE=circle` the private key doesn't exist in our stack at all — Circle Wallets holds it; SpendGuard holds only the *decision* to sign.
-3. **Auditability:** every decision (allow/hold/deny + code) is ledgered; policy hashes are anchored in `SpendAnchor` on Arc on every update, and SpendGuard auto-commits a spend epoch every 10 minutes when spend changed (`EPOCH_COMMIT_INTERVAL_MS`; skip-if-unchanged so every anchored epoch marks real movement). The dashboard's story is externally verifiable and cannot silently go stale.
+2. **SpendGuard ↔ chain:** policy is evaluated before any signature exists. In `SIGNER_MODE=circle` the private key doesn't exist in our stack at all — Circle Wallets holds it; SpendGuard holds only the *decision* to sign. This covers **both** payment signatures **and** the on-chain anchor transactions (both go through Circle contract-execution — no raw key).
+3. **Auditability:** every decision (allow/hold/deny + code) is ledgered; policy hashes are anchored in `SpendAnchor` on Arc on every update, and SpendGuard auto-commits a spend epoch every 10 minutes when spend changed (`EPOCH_COMMIT_INTERVAL_MS`; skip-if-unchanged so every anchored epoch marks real movement) — the anchor transactions are signed by the Circle DCW wallet, not a raw key. The dashboard's story is externally verifiable and cannot silently go stale.
 
 ## Payment sequence (happy path)
 

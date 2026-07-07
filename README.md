@@ -55,7 +55,7 @@ npm run generate-wallet    # creates the agent's Circle DCW **EOA** wallet on AR
 
 # four terminals (or a process manager):
 npm run dev:sellers        # :4001 :4002 :4003
-npm run dev:signer         # :5000
+npm run dev:signer         # :5001
 npm run dev:agent          # subscribes, meters, renews
 npm run dev:dashboard      # :3000
 
@@ -82,7 +82,7 @@ open http://localhost:3000                         # 4. burn-down, savings, rece
 
 **Circle Wallets (developer-controlled) — key custody**
 - `scripts/generate-wallet.mjs` creates the agent wallet with `accountType: "EOA"` on `ARC-TESTNET` — EOA is mandatory: Gateway's x402 settlement verifies EIP-3009 signatures with `ecrecover`, so smart-contract accounts (EIP-1271) do not work.
-- `SIGNER_MODE=circle` (default, **verified E2E on Arc Testnet**): SpendGuard signs EIP-712 via `circleDeveloperSdk.signTypedData({ walletId })` and even the Gateway deposit runs through Circle's contract-execution API (`approve` + `deposit` from the DCW wallet) — **no raw private key exists anywhere in the stack**. The agent's wallet is custodied by Circle; SpendGuard holds only the decision to sign. (`SIGNER_MODE=local` remains as a development fallback.)
+- `SIGNER_MODE=circle` (default, **verified E2E on Arc Testnet**): SpendGuard signs EIP-712 via `circleDeveloperSdk.signTypedData({ walletId })`, the Gateway deposit runs through Circle's contract-execution API (`approve` + `deposit` from the DCW wallet), and the **on-chain audit trail (SpendAnchor policy + epoch commits) is signed the same way** — Circle contract-execution, no raw key. So **no raw private key exists anywhere in the deployed stack: payments and anchoring alike**. The agent's wallet is custodied by Circle; SpendGuard holds only the decision to sign. (`SIGNER_MODE=local` is an offline-dev-only fallback: it uses a local EOA for payments and does not anchor on-chain.)
 
 **Circle Gateway — settlement + treasury**
 - One-time `deposit()` funds the agent's Gateway balance; thereafter every payment is a gas-free offchain EIP-3009 authorization, batch-settled onchain by Gateway. `getBalances()` feeds the dashboard treasury card.
@@ -96,7 +96,7 @@ open http://localhost:3000                         # 4. burn-down, savings, rece
 - [x] Scaffold: all services, policy engine, approval queue, re-shop, dashboard, contract
 - [x] **Day 0:** `verify-day0.sh` E2E on Arc Testnet (kill criterion cleared)
 - [x] Day 1: DCW-EOA signing verified against Gateway settle E2E (`SIGNER_MODE=circle`) — including DCW-native Gateway deposit via contract-execution API
-- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xfe18f3c42f9318f20cae9cd5b2983e229554e435`](https://testnet.arcscan.app/address/0xfe18f3c42f9318f20cae9cd5b2983e229554e435) — policy hashes anchored on every update, spend epochs auto-anchored every 10 min (skip-if-unchanged; manual `POST /epochs/commit` still forces one); deployed with `scripts/deploy-anchor.mjs` (solc + viem, no Foundry required)
+- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xf550a882da3c26fbacd1b68aa83867102206b143`](https://testnet.arcscan.app/address/0xf550a882da3c26fbacd1b68aa83867102206b143) — policy hashes anchored on every update, spend epochs auto-anchored every 10 min (skip-if-unchanged; manual `POST /epochs/commit` still forces one); deployed with `scripts/deploy-anchor.mjs` (solc + viem, no Foundry required)
 - [x] All four demo beats rehearsed: autonomous metering, 21.9% re-shop switch, injection denied at per-tx wall, human approval hold/release
 - [x] Deployed: https://autopilotdashboard-production.up.railway.app (dashboard) · https://autopilotsigner-production.up.railway.app (signer API) — Railway ×4, mode=circle, volume-backed ledger
 - [ ] 3-min video + submission form

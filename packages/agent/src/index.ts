@@ -14,6 +14,7 @@
 import "./env.js";
 import { pay, deposit, balances } from "./signer-client.js";
 import { getQuotes, reshop } from "./reshop.js";
+import { maybeTopUp } from "./treasury.js";
 import * as subs from "./subscriptions.js";
 
 const TICK_MS = Number(process.env.AGENT_TICK_MS ?? 20_000);
@@ -104,6 +105,7 @@ async function main(): Promise<void> {
     if (!running) break;
     await useServices().catch((e) => console.error("[agent] tick error:", e.message));
     await processRenewals().catch((e) => console.error("[agent] renewal error:", e.message));
+    await maybeTopUp().catch((e) => console.error("[agent] treasury error:", e.message));
     if (!running) break;
     await new Promise((r) => setTimeout(r, TICK_MS));
   }

@@ -24,10 +24,15 @@ async function dcw() {
 const TERMINAL_OK = new Set(["CONFIRMED", "COMPLETE"]);
 const TERMINAL_BAD = new Set(["FAILED", "DENIED", "CANCELLED", "STUCK"]);
 
-async function contractCall(contractAddress: string, abiFunctionSignature: string, abiParameters: string[]): Promise<string> {
+export async function contractCall(
+  contractAddress: string,
+  abiFunctionSignature: string,
+  abiParameters: string[],
+  walletId: string = process.env.AGENT_WALLET_ID!,   // default = Arc agent wallet; CCTP passes a source-chain wallet
+): Promise<string> {
   const c = await dcw();
   const created = await c.createContractExecutionTransaction({
-    walletId: process.env.AGENT_WALLET_ID!,
+    walletId,
     contractAddress,
     abiFunctionSignature,
     abiParameters,

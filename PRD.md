@@ -109,7 +109,7 @@ Every payment is authorized by **SpendGuard**, an out-of-process policy-gated si
 └─────────────────────────────┘
 ```
 
-**Security invariant (the one-sentence story):** *the agent can want anything; it can only sign what policy allows.* The EIP-3009 signing capability lives exclusively in SpendGuard, which delegates the actual signature to a Circle developer-controlled EOA wallet — no raw private key exists anywhere in the codebase (fallback: local EOA env var).
+**Security invariant (the one-sentence story):** *the agent can want anything; it can only sign what policy allows.* The EIP-3009 signing capability lives exclusively in SpendGuard, which delegates **every signature — payments *and* the on-chain SpendAnchor audit trail** — to a Circle developer-controlled EOA wallet, so no raw private key exists anywhere in the deployed stack. (`SIGNER_MODE=local` is an offline-dev-only fallback that uses a local EOA for payments and skips on-chain anchoring.)
 
 ## 7. Feature Spec (prioritized)
 
@@ -211,7 +211,7 @@ npm run generate-wallet        # writes WALLET_ID + address into .env
 
 # 5. Run everything
 npm run dev:sellers            # :4001 :4002 :4003 — competing x402 APIs
-npm run dev:signer             # :5000 — SpendGuard policy + signing
+npm run dev:signer             # :5001 — SpendGuard policy + signing
 npm run dev:agent              # agent loop (deposits to Gateway on first run)
 npm run dev:dashboard          # :3000
 

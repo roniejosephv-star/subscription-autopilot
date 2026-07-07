@@ -24,6 +24,9 @@ import { anchorPolicyHash, commitEpochOnChain } from "./anchor.js";
 import { circleSignTypedData } from "./circle-wallet.js";
 import { dcwPay, PolicyDeniedError } from "./dcw-pay.js";
 import { dcwDeposit } from "./dcw-chain.js";
+import { cctpTopUp } from "./cctp.js";
+import { usycInvest, usycRedeem } from "./usyc.js";
+import { fxQuote, fxSettle } from "./stablefx.js";
 
 const CIRCLE_MODE = () => process.env.SIGNER_MODE === "circle";
 
@@ -170,6 +173,47 @@ app.post("/deposit", async (req, res) => {
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
+});
+
+/** Autonomous treasury top-up: pull USDC into Arc from a source chain via CCTP. */
+app.post("/treasury/topup", async (req, res) => {
+  const { amount } = req.body as { amount?: string };
+  if (!amount) return res.status(400).json({ error: "amount required" });
+  if (!CIRCLE_MODE()) return res.status(409).json({ error: "CCTP top-up requires SIGNER_MODE=circle" });
+  try {
+    const result = await cctpTopUp(amount);
+    return res.json(result);
+  } catch (err) {
+    return res.status(502).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+/** USYC tokenized-yield leg (enterprise-gated; wired behind USYC_ENABLED). */
+app.post("/treasury/yield/invest", async (req, res) => {
+  const { amount } = req.body as { amount?: string };
+  if (!amount) return res.status(400).json({ error: "amount required" });
+  try { return res.json(await usycInvest(amount)); }
+  catch (err) { return res.status(409).json({ error: err instanceof Error ? err.message : String(err) }); }
+});
+app.post("/treasury/yield/redeem", async (req, res) => {
+  const { amount } = req.body as { amount?: string };
+  if (!amount) return res.status(400).json({ error: "amount required" });
+  try { return res.json(await usycRedeem(amount)); }
+  catch (err) { return res.status(409).json({ error: err instanceof Error ? err.message : String(err) }); }
+});
+
+/** StableFX cross-currency settlement (enterprise-gated; wired behind STABLEFX_ENABLED). */
+app.post("/fx/quote", async (req, res) => {
+  const { from, to, amount } = req.body as { from?: string; to?: string; amount?: string };
+  if (!from || !to || !amount) return res.status(400).json({ error: "from, to, amount required" });
+  try { return res.json(await fxQuote(from, to, amount)); }
+  catch (err) { return res.status(409).json({ error: err instanceof Error ? err.message : String(err) }); }
+});
+app.post("/fx/settle", async (req, res) => {
+  const { quoteId } = req.body as { quoteId?: string };
+  if (!quoteId) return res.status(400).json({ error: "quoteId required" });
+  try { return res.json(await fxSettle(quoteId)); }
+  catch (err) { return res.status(409).json({ error: err instanceof Error ? err.message : String(err) }); }
 });
 
 app.get("/balances", async (_req, res) => {

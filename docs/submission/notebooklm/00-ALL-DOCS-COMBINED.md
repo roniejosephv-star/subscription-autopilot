@@ -66,7 +66,7 @@ npm run generate-wallet    # creates the agent's Circle DCW **EOA** wallet on AR
 
 # four terminals (or a process manager):
 npm run dev:sellers        # :4001 :4002 :4003
-npm run dev:signer         # :5000
+npm run dev:signer         # :5001
 npm run dev:agent          # subscribes, meters, renews
 npm run dev:dashboard      # :3000
 
@@ -93,7 +93,7 @@ open http://localhost:3000                         # 4. burn-down, savings, rece
 
 **Circle Wallets (developer-controlled) — key custody**
 - `scripts/generate-wallet.mjs` creates the agent wallet with `accountType: "EOA"` on `ARC-TESTNET` — EOA is mandatory: Gateway's x402 settlement verifies EIP-3009 signatures with `ecrecover`, so smart-contract accounts (EIP-1271) do not work.
-- `SIGNER_MODE=circle` (default, **verified E2E on Arc Testnet**): SpendGuard signs EIP-712 via `circleDeveloperSdk.signTypedData({ walletId })` and even the Gateway deposit runs through Circle's contract-execution API (`approve` + `deposit` from the DCW wallet) — **no raw private key exists anywhere in the stack**. The agent's wallet is custodied by Circle; SpendGuard holds only the decision to sign. (`SIGNER_MODE=local` remains as a development fallback.)
+- `SIGNER_MODE=circle` (default, **verified E2E on Arc Testnet**): SpendGuard signs EIP-712 via `circleDeveloperSdk.signTypedData({ walletId })`, the Gateway deposit runs through Circle's contract-execution API (`approve` + `deposit` from the DCW wallet), and the **on-chain audit trail (SpendAnchor policy + epoch commits) is signed the same way** — Circle contract-execution, no raw key. So **no raw private key exists anywhere in the deployed stack: payments and anchoring alike**. The agent's wallet is custodied by Circle; SpendGuard holds only the decision to sign. (`SIGNER_MODE=local` is an offline-dev-only fallback: it uses a local EOA for payments and does not anchor on-chain.)
 
 **Circle Gateway — settlement + treasury**
 - One-time `deposit()` funds the agent's Gateway balance; thereafter every payment is a gas-free offchain EIP-3009 authorization, batch-settled onchain by Gateway. `getBalances()` feeds the dashboard treasury card.
@@ -107,7 +107,7 @@ open http://localhost:3000                         # 4. burn-down, savings, rece
 - [x] Scaffold: all services, policy engine, approval queue, re-shop, dashboard, contract
 - [x] **Day 0:** `verify-day0.sh` E2E on Arc Testnet (kill criterion cleared)
 - [x] Day 1: DCW-EOA signing verified against Gateway settle E2E (`SIGNER_MODE=circle`) — including DCW-native Gateway deposit via contract-execution API
-- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xfe18f3c42f9318f20cae9cd5b2983e229554e435`](https://testnet.arcscan.app/address/0xfe18f3c42f9318f20cae9cd5b2983e229554e435) — policy hashes anchored on every update, spend epochs auto-anchored every 10 min (skip-if-unchanged; manual `POST /epochs/commit` still forces one); deployed with `scripts/deploy-anchor.mjs` (solc + viem, no Foundry required)
+- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xf550a882da3c26fbacd1b68aa83867102206b143`](https://testnet.arcscan.app/address/0xf550a882da3c26fbacd1b68aa83867102206b143) — policy hashes anchored on every update, spend epochs auto-anchored every 10 min (skip-if-unchanged; manual `POST /epochs/commit` still forces one); deployed with `scripts/deploy-anchor.mjs` (solc + viem, no Foundry required)
 - [x] All four demo beats rehearsed: autonomous metering, 21.9% re-shop switch, injection denied at per-tx wall, human approval hold/release
 - [x] Deployed: https://autopilotdashboard-production.up.railway.app (dashboard) · https://autopilotsigner-production.up.railway.app (signer API) — Railway ×4, mode=circle, volume-backed ledger
 - [ ] 3-min video + submission form
@@ -115,6 +115,7 @@ open http://localhost:3000                         # 4. burn-down, savings, rece
 ## License
 
 Apache-2.0. Patterns adapted from Circle's Apache-2.0 samples (arc-escrow, arc-fintech) are credited inline where used.
+
 
 ════════════════════════════════════════════
 # SOURCE DOCUMENT: 02-ARCHITECTURE.md
@@ -132,7 +133,7 @@ Apache-2.0. Patterns adapted from Circle's Apache-2.0 samples (arc-escrow, arc-f
                                 │ /ledger /approvals        │ /summary
                                 │        (poll 2s)          │
 ┌──────────────┐   POST /pay   ┌┴───────────────────────────┴────────┐
-│ AGENT :loop  │──────────────▶│  SPENDGUARD (:5000)                 │
+│ AGENT :loop  │──────────────▶│  SPENDGUARD (:5001)                 │
 │ (no keys!)   │  {url,        │  policy chain (policy.ts):          │
 │ subscribe    │   serviceId,  │   allowlist → perTx → monthly →     │
 │ meter usage  │   reason}     │   perService → velocity → threshold │
@@ -161,8 +162,8 @@ Apache-2.0. Patterns adapted from Circle's Apache-2.0 samples (arc-escrow, arc-f
 ## Trust boundaries
 
 1. **Agent ↔ SpendGuard:** the agent is untrusted (LLM, injectable). It has no keys, no Circle SDK, no chain RPC — only `POST /pay` with a stated reason. A compromised agent can *ask*; it cannot *take*.
-2. **SpendGuard ↔ chain:** policy is evaluated before any signature exists. In `SIGNER_MODE=circle` the private key doesn't exist in our stack at all — Circle Wallets holds it; SpendGuard holds only the *decision* to sign.
-3. **Auditability:** every decision (allow/hold/deny + code) is ledgered; policy hashes are anchored in `SpendAnchor` on Arc on every update, and SpendGuard auto-commits a spend epoch every 10 minutes when spend changed (`EPOCH_COMMIT_INTERVAL_MS`; skip-if-unchanged so every anchored epoch marks real movement). The dashboard's story is externally verifiable and cannot silently go stale.
+2. **SpendGuard ↔ chain:** policy is evaluated before any signature exists. In `SIGNER_MODE=circle` the private key doesn't exist in our stack at all — Circle Wallets holds it; SpendGuard holds only the *decision* to sign. This covers **both** payment signatures **and** the on-chain anchor transactions (both go through Circle contract-execution — no raw key).
+3. **Auditability:** every decision (allow/hold/deny + code) is ledgered; policy hashes are anchored in `SpendAnchor` on Arc on every update, and SpendGuard auto-commits a spend epoch every 10 minutes when spend changed (`EPOCH_COMMIT_INTERVAL_MS`; skip-if-unchanged so every anchored epoch marks real movement) — the anchor transactions are signed by the Circle DCW wallet, not a raw key. The dashboard's story is externally verifiable and cannot silently go stale.
 
 ## Payment sequence (happy path)
 
@@ -171,6 +172,7 @@ agent `POST /pay` → SpendGuard fetches URL → seller 402 + PAYMENT-REQUIRED (
 ## Cross-chain extension (diagrammed, not in MVP)
 
 Gateway's crosschain `withdraw()` lets the owner top up the agent's budget from any Gateway-supported chain (CCTP/Bridge Kit rails) — the agent's spending chain stays Arc.
+
 
 ════════════════════════════════════════════
 # SOURCE DOCUMENT: 03-PRD.md
@@ -287,7 +289,7 @@ Every payment is authorized by **SpendGuard**, an out-of-process policy-gated si
 └─────────────────────────────┘
 ```
 
-**Security invariant (the one-sentence story):** *the agent can want anything; it can only sign what policy allows.* The EIP-3009 signing capability lives exclusively in SpendGuard, which delegates the actual signature to a Circle developer-controlled EOA wallet — no raw private key exists anywhere in the codebase (fallback: local EOA env var).
+**Security invariant (the one-sentence story):** *the agent can want anything; it can only sign what policy allows.* The EIP-3009 signing capability lives exclusively in SpendGuard, which delegates **every signature — payments *and* the on-chain SpendAnchor audit trail** — to a Circle developer-controlled EOA wallet, so no raw private key exists anywhere in the deployed stack. (`SIGNER_MODE=local` is an offline-dev-only fallback that uses a local EOA for payments and skips on-chain anchoring.)
 
 ## 7. Feature Spec (prioritized)
 
@@ -389,7 +391,7 @@ npm run generate-wallet        # writes WALLET_ID + address into .env
 
 # 5. Run everything
 npm run dev:sellers            # :4001 :4002 :4003 — competing x402 APIs
-npm run dev:signer             # :5000 — SpendGuard policy + signing
+npm run dev:signer             # :5001 — SpendGuard policy + signing
 npm run dev:agent              # agent loop (deposits to Gateway on first run)
 npm run dev:dashboard          # :3000
 
@@ -453,16 +455,17 @@ Day 0: verify-day0 E2E or reconvene on Track 2 · Day 1: signer service + DCW si
 - [x] Demo URL → Railway (all four services): https://autopilotdashboard-production.up.railway.app
 - [x] "Circle Product Feedback" section → FEEDBACK.md (§12 seed)
 
+
 ════════════════════════════════════════════
 # SOURCE DOCUMENT: 04-DEPLOYMENT.md
 ════════════════════════════════════════════
 
-# Deployment — Railway (backend) + Vercel (dashboard)
+# Deployment — Railway (all four services)
 
-Topology: **3 Railway services** from this one repo (signer public, sellers + agent private-network only) and the **dashboard on Vercel**, whose server proxies `/api/signer/*` to the signer's public URL. SQLite lives on a Railway volume.
+Topology: **4 Railway services** from this one repo (signer public + dashboard public; sellers + agent private-network only). The dashboard's Next server proxies `/api/signer/*` to the signer over Railway's private network. SQLite lives on a Railway volume. Live demo: https://autopilotdashboard-production.up.railway.app
 
 ```
-Vercel dashboard ──HTTPS──▶ Railway signer (public domain, volume /data)
+Railway dashboard (public) ──proxy /api/signer/*──▶ Railway signer (public domain, volume /data)
                                    │ private network (IPv6)
                      Railway sellers (:4001-4003, no public ingress)
                      Railway agent  (no ingress) ──▶ signer + sellers via .internal
@@ -472,7 +475,7 @@ Vercel dashboard ──HTTPS──▶ Railway signer (public domain, volume /dat
 
 1. [railway.app](https://railway.app) → login with the **GitHub account that owns the repo** → New Project → **Deploy from GitHub repo** → `subscription-autopilot`.
 2. This creates one service. Rename it **`signer`** (Settings → Service name — the name becomes its private hostname `signer.railway.internal`).
-3. Add two more services from the same repo: project canvas → **+ New → GitHub Repo** (same repo) → rename **`sellers`**; repeat → rename **`agent`**.
+3. Add three more services from the same repo: project canvas → **+ New → GitHub Repo** (same repo) → rename **`sellers`**; repeat → rename **`agent`**; repeat → rename **`dashboard`**.
 
 ### Per-service settings (Settings → Deploy)
 
@@ -481,6 +484,7 @@ Vercel dashboard ──HTTPS──▶ Railway signer (public domain, volume /dat
 | signer | `npm run start -w packages/signer` | **Generate Domain** (Settings → Networking) — note the URL |
 | sellers | `npm run start -w packages/sellers` | none (private only) |
 | agent | `npm run start -w packages/agent` | none |
+| dashboard | `npm run start -w packages/dashboard` | **Generate Domain** — this is the Demo URL |
 
 Build: leave Nixpacks defaults (root `npm ci`, workspaces install everything).
 
@@ -500,7 +504,7 @@ AGENT_WALLET_ADDRESS=0x7dbffb7d8ad2df227cff3d5d1846ae8f85d16346
 SIGNER_FALLBACK_PRIVATE_KEY=<yours>
 SIGNER_DB=/data/spendguard.db
 GATEWAY_FACILITATOR_URL=https://gateway-api-testnet.circle.com
-ANCHOR_CONTRACT_ADDRESS=0xfe18f3c42f9318f20cae9cd5b2983e229554e435
+ANCHOR_CONTRACT_ADDRESS=0xf550a882da3c26fbacd1b68aa83867102206b143
 SELLER_ADDRESS_A=0xD11d8043598001ea7DB8657f6AF165BDB962a294
 SELLER_ADDRESS_B=0x3Fd8c634265cCe09590251BADEEc1052e67A4C7a
 SELLER_ADDRESS_C=0xD3F15Ee24F10d9AcD5CF89d8F4743B413650Aff5
@@ -508,7 +512,7 @@ POLICY_MONTHLY_BUDGET=10
 POLICY_PER_SERVICE_CAP=3
 POLICY_PER_TX_MAX=0.05
 POLICY_APPROVAL_THRESHOLD=0.02
-POLICY_DAILY_TX_MAX=2000
+POLICY_DAILY_TX_MAX=500
 APPROVAL_WAIT_MS=60000
 ```
 (Railway injects `PORT`; the signer honors it.)
@@ -538,12 +542,12 @@ RENEWAL_PERIOD_MS=120000
 
 Deploy order: sellers → signer → agent (agent errors harmlessly until the others are up; it retries each tick).
 
-## 2. Vercel — dashboard
+## 2. Railway — dashboard
 
-1. [vercel.com](https://vercel.com) → Add New → Project → import `subscription-autopilot`.
-2. **Root Directory: `packages/dashboard`** (critical). Framework auto-detects Next.js.
-3. Environment variable: `SIGNER_INTERNAL_URL=https://<signer-public-domain-from-railway>` (no trailing slash).
-4. Deploy → note the `*.vercel.app` URL — **this is the submission's Demo URL**.
+1. The `dashboard` service is the 4th Railway service (added in step 1.3), deployed from the same repo.
+2. Start command: `npm run start -w packages/dashboard` (Next.js production server).
+3. Environment variable: `SIGNER_INTERNAL_URL=http://signer.railway.internal:5001` (private network; the Next server proxies `/api/signer/*` to it). A public signer domain also works if you prefer.
+4. **Generate Domain** (Settings → Networking) → the resulting `*.up.railway.app` URL is **the submission's Demo URL** (live: https://autopilotdashboard-production.up.railway.app).
 
 ## 3. Smoke test (in order)
 
@@ -552,7 +556,7 @@ Deploy order: sellers → signer → agent (agent errors harmlessly until the ot
 curl -s https://<signer-domain>/summary | head -c 200
 
 # dashboard proxy path?
-curl -s https://<dashboard>.vercel.app/api/signer/summary | head -c 200
+curl -s https://<dashboard-domain>.up.railway.app/api/signer/summary | head -c 200
 
 # then open the dashboard in a browser: live rows with fresh timestamps = agent alive
 ```
@@ -563,8 +567,9 @@ Beat checks against production: the approval flow (`curl -X POST https://<signer
 - **Private networking is IPv6-only** on Railway; Express binds `::` by default and Node fetch resolves `.internal` hostnames — no code changes needed. If sellers are unreachable from agent/signer, check all three services are in the same project + environment.
 - **SQLite on a volume** = single signer instance only (fine for the demo; noted as future work).
 - The dashboard's `/api/signer/*` proxy means the signer's CORS never matters in production.
-- Costs: Railway Hobby (~$5/mo credit) covers three tiny Node services; agent burns ~$0.5/day testnet USDC from the Gateway balance — top up via faucet + `POST /deposit` if the demo window is long.
+- Costs: Railway Hobby (~$5/mo credit) covers four tiny Node services; agent burns ~$0.5/day testnet USDC from the Gateway balance — top up via faucet + `POST /deposit` if the demo window is long.
 - `serve:*` scripts (local) still load `.env`; deployed `start` scripts read injected env only.
+
 
 ════════════════════════════════════════════
 # SOURCE DOCUMENT: 05-CIRCLE-FEEDBACK.md
@@ -599,6 +604,7 @@ Beat checks against production: the approval flow (`curl -X POST https://<signer
 ## Recommendations
 *(fill during build)*
 
+
 ════════════════════════════════════════════
 # SOURCE DOCUMENT: 06-demo-script.md
 ════════════════════════════════════════════
@@ -614,6 +620,7 @@ Beat checks against production: the approval flow (`curl -X POST https://<signer
 **2:00–2:40 — How it's built.** Architecture diagram, 20 seconds: agent → SpendGuard (policy + Circle Wallets custody) → x402 sellers → Gateway settlement → SpendAnchor on Arc. Circle products on screen: Nanopayments, Gateway, Wallets, USDC.
 
 **2:40–3:00 — Close.** Month-end dashboard: spend vs budget, savings from switching, denial log, Arc receipts. "Circle's sample shows an agent that can pay. Autopilot pays well — cheaper, safer, gasless. Track 4, Subscription Autopilot."
+
 
 ════════════════════════════════════════════
 # SOURCE DOCUMENT: 07-shooting-script.md
@@ -633,7 +640,7 @@ recording — same shots, same words.
 |---|---|
 | Dashboard (demo URL) | https://autopilotdashboard-production.up.railway.app |
 | SpendGuard API | https://autopilotsigner-production.up.railway.app |
-| SpendAnchor on arcscan | https://testnet.arcscan.app/address/0xfe18f3c42f9318f20cae9cd5b2983e229554e435 |
+| SpendAnchor on arcscan | https://testnet.arcscan.app/address/0xf550a882da3c26fbacd1b68aa83867102206b143 |
 
 **Pre-flight (Claude, in Railway — before any capture)**
 
