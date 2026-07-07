@@ -12,6 +12,7 @@
  * (see circle-wallet.ts + /sign endpoint) so no raw key exists anywhere.
  */
 import "./env.js";
+import { randomBytes } from "node:crypto";
 import express from "express";
 import { GatewayClient } from "@circle-fin/x402-batching/client";
 import { fromAtomic, type PayResult } from "@autopilot/shared";
@@ -42,6 +43,20 @@ function requireKey(): `0x${string}` {
 
 function newClient(): GatewayClient {
   return new GatewayClient({ chain: "arcTestnet", privateKey: requireKey() });
+}
+
+/**
+ * Read-only Gateway client for balance/transfer lookups. These reads target an
+ * explicit address (AGENT_WALLET_ADDRESS) and never sign, but the SDK constructor
+ * still wants a private key. In circle mode there is NO raw key in the stack, so we
+ * pass an EPHEMERAL one generated in-process — it holds nothing, is never persisted,
+ * and never signs a transaction. Keeps `/balances` working while the deployed stack
+ * remains free of any raw private key at rest.
+ */
+function readClient(): GatewayClient {
+  const pk = (process.env.SIGNER_FALLBACK_PRIVATE_KEY as `0x${string}` | undefined)
+    ?? (`0x${randomBytes(32).toString("hex")}` as `0x${string}`);
+  return new GatewayClient({ chain: "arcTestnet", privateKey: pk });
 }
 
 /**
@@ -218,7 +233,7 @@ app.post("/fx/settle", async (req, res) => {
 
 app.get("/balances", async (_req, res) => {
   try {
-    const b = await newClient().getBalances(
+    const b = await readClient().getBalances(
       CIRCLE_MODE() ? (process.env.AGENT_WALLET_ADDRESS as `0x${string}`) : undefined,
     );
     res.json({ wallet: b.wallet.formatted, gatewayAvailable: b.gateway.formattedAvailable, gatewayTotal: b.gateway.formattedTotal });
@@ -249,7 +264,7 @@ app.get("/ledger", (_req, res) => res.json(recentLedger()));
 /** Gateway transfer status lookup — payment "receipts" are transfer UUIDs, not chain txs. */
 app.get("/transfers/:id", async (req, res) => {
   try {
-    const t = await newClient().getTransferById(req.params.id);
+    const t = await readClient().getTransferById(req.params.id);
     res.json(t);
   } catch (err) {
     res.status(404).json({ error: err instanceof Error ? err.message : String(err) });
