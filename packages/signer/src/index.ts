@@ -212,21 +212,46 @@ app.get("/transfers/:id", async (req, res) => {
   }
 });
 
-/** Anchor a spend epoch on Arc (F9): ledger snapshot root + total spent. */
+/** Anchor a spend epoch on Arc (F9): ledger snapshot root + total spent.
+ *  Skips (returns null) when nothing was spent since the last committed epoch,
+ *  so every anchored epoch marks real ledger movement — no empty commits. */
+async function commitEpoch(force = false) {
+  const entries = recentLedger(1000);
+  const total = entries
+    .filter((e) => e.decision === "allow" && e.transaction)
+    .reduce((s, e) => s + BigInt(e.amountAtomic), 0n);
+  const prev = lastEpoch();
+  if (!force && prev && prev.totalSpentAtomic === total.toString()) return null; // nothing new to anchor
+  const result = await commitEpochOnChain(JSON.stringify(entries), total);
+  if (!result) return null; // ANCHOR_CONTRACT_ADDRESS not configured
+  logEpoch({ ...result, totalSpentAtomic: total.toString() });
+  return { ...result, totalSpentAtomic: total.toString(), explorer: `https://testnet.arcscan.app/tx/${result.tx}` };
+}
+
 app.post("/epochs/commit", async (_req, res) => {
   try {
-    const entries = recentLedger(1000);
-    const total = entries
-      .filter((e) => e.decision === "allow" && e.transaction)
-      .reduce((s, e) => s + BigInt(e.amountAtomic), 0n);
-    const result = await commitEpochOnChain(JSON.stringify(entries), total);
+    const result = await commitEpoch(true);
     if (!result) return res.status(409).json({ error: "ANCHOR_CONTRACT_ADDRESS not configured" });
-    logEpoch({ ...result, totalSpentAtomic: total.toString() });
-    res.json({ ...result, totalSpentAtomic: total.toString(), explorer: `https://testnet.arcscan.app/tx/${result.tx}` });
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
 });
+
+/** F9 auto-anchor: commit an epoch on a fixed cadence (default 10 min) so the
+ *  on-chain audit trail — and the dashboard's epoch chip — never go stale.
+ *  Set EPOCH_COMMIT_INTERVAL_MS=0 to disable and anchor manually only. */
+const EPOCH_INTERVAL = Number(process.env.EPOCH_COMMIT_INTERVAL_MS ?? 600_000);
+if (EPOCH_INTERVAL > 0) {
+  setInterval(async () => {
+    try {
+      const r = await commitEpoch();
+      if (r) console.log(`[spendguard] epoch ${r.epoch} anchored on Arc (${r.totalSpentAtomic} atomic spent) → ${r.explorer}`);
+    } catch (err) {
+      console.warn(`[spendguard] epoch auto-commit failed (will retry next interval): ${err instanceof Error ? err.message : err}`);
+    }
+  }, EPOCH_INTERVAL).unref();
+}
 
 app.get("/summary", (_req, res) => {
   const entries = recentLedger(1000);
