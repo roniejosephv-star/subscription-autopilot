@@ -10,7 +10,7 @@
 | **Status** | Finalized (Strategy v5) — see `STRATEGY.md` for research trail |
 | **Team** | Solo, part-time, 6 build days |
 | **Repository** | https://github.com/roniejosephv-star/subscription-autopilot |
-| **Demo URL** | *(Vercel/Railway — added Day 6)* |
+| **Demo URL** | https://autopilotdashboard-production.up.railway.app (dashboard) · https://autopilotsigner-production.up.railway.app (SpendGuard API) |
 | **Scope note** | Testnet demo only (Arc Testnet, chain ID 5042002) |
 
 ---
@@ -269,8 +269,8 @@ Day 0: verify-day0 E2E or reconvene on Track 2 · Day 1: signer service + DCW si
 - [ ] Circle Developer Account email → **create Day 0**
 - [ ] Products used: USDC ✓ Wallets ✓ Gateway ✓ Nanopayments ✓ (CCTP/Bridge Kit: architecture extension — only tick if F13 ships)
 - [ ] Functional MVP (frontend + backend) → F1–F8
-- [ ] Architecture diagram → docs/architecture.png
+- [x] Architecture diagram → docs/architecture.png
 - [ ] Video + presentation → docs/demo-script.md (4-beat arc)
-- [ ] GitHub repo w/ setup + Circle integration docs → §9 + §10 seed the README
-- [ ] Demo URL → Vercel (dashboard) + Railway (signer/sellers/agent)
-- [ ] "Circle Product Feedback" section → FEEDBACK.md (§12 seed)
+- [x] GitHub repo w/ setup + Circle integration docs → §9 + §10 seed the README
+- [x] Demo URL → Railway (all four services): https://autopilotdashboard-production.up.railway.app
+- [x] "Circle Product Feedback" section → FEEDBACK.md (§12 seed)
