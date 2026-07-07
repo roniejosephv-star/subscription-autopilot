@@ -22,3 +22,4 @@ get-address.mjs
 # entity secret recovery files — never commit
 entity-secret-recovery.dat
 recovery_file_*.dat
+*.tsbuildinfo
