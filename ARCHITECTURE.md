@@ -40,7 +40,7 @@
 
 1. **Agent ↔ SpendGuard:** the agent is untrusted (LLM, injectable). It has no keys, no Circle SDK, no chain RPC — only `POST /pay` with a stated reason. A compromised agent can *ask*; it cannot *take*.
 2. **SpendGuard ↔ chain:** policy is evaluated before any signature exists. In `SIGNER_MODE=circle` the private key doesn't exist in our stack at all — Circle Wallets holds it; SpendGuard holds only the *decision* to sign. This covers **both** payment signatures **and** the on-chain anchor transactions (both go through Circle contract-execution — no raw key).
-3. **Auditability:** every decision (allow/hold/deny + code) is ledgered; policy hashes are anchored in `SpendAnchor` on Arc on every update, and SpendGuard auto-commits a spend epoch every 10 minutes when spend changed (`EPOCH_COMMIT_INTERVAL_MS`; skip-if-unchanged so every anchored epoch marks real movement) — the anchor transactions are signed by the Circle DCW wallet, not a raw key. The dashboard's story is externally verifiable and cannot silently go stale.
+3. **Auditability:** every decision (allow/hold/deny + code) is ledgered; policy hashes are anchored in `SpendAnchor` on Arc on every update, and SpendGuard auto-commits a spend epoch every 10 minutes when spend changed (`EPOCH_COMMIT_INTERVAL_MS`; skip-if-unchanged so every anchored epoch marks real movement) — the anchor transactions are signed by the Circle DCW wallet, not a raw key (verified live: epoch tx [`0xdceaf6e6…`](https://testnet.arcscan.app/tx/0xdceaf6e6bbab8d00d8162829e9de8d66e72e45e4faec81e4891b7a2d81fc32a8), From = DCW wallet `0x7dbffb7d…`). The dashboard's story is externally verifiable and cannot silently go stale.
 
 ## Payment sequence (happy path)
 

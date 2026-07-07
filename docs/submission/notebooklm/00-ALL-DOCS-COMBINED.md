@@ -100,14 +100,14 @@ open http://localhost:3000                         # 4. burn-down, savings, rece
 
 **USDC on Arc** — settlement asset *and* gas token. The anchor-contract transactions are paid in USDC (18-decimal gas / 6-decimal ERC-20 duality noted in FEEDBACK.md).
 
-**CCTP / Bridge Kit** — architecture extension (not in MVP): cross-chain budget top-ups via Gateway's crosschain `withdraw()`; see `ARCHITECTURE.md`.
+**CCTP / Bridge Kit** — autonomous cross-chain treasury: when the Arc Gateway balance runs low the agent pulls USDC from a source chain (approve → `depositForBurn` → IRIS attestation → `receiveMessage`) via DCW contract-execution (`packages/signer/src/cctp.ts`, agent trigger in `treasury.ts`). Orchestration live; cross-chain execution one funded source-wallet away. See `ARCHITECTURE.md`.
 
 ## Status / roadmap
 
 - [x] Scaffold: all services, policy engine, approval queue, re-shop, dashboard, contract
 - [x] **Day 0:** `verify-day0.sh` E2E on Arc Testnet (kill criterion cleared)
 - [x] Day 1: DCW-EOA signing verified against Gateway settle E2E (`SIGNER_MODE=circle`) — including DCW-native Gateway deposit via contract-execution API
-- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xf550a882da3c26fbacd1b68aa83867102206b143`](https://testnet.arcscan.app/address/0xf550a882da3c26fbacd1b68aa83867102206b143) — policy hashes anchored on every update, spend epochs auto-anchored every 10 min (skip-if-unchanged; manual `POST /epochs/commit` still forces one); deployed with `scripts/deploy-anchor.mjs` (solc + viem, no Foundry required)
+- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xf550a882da3c26fbacd1b68aa83867102206b143`](https://testnet.arcscan.app/address/0xf550a882da3c26fbacd1b68aa83867102206b143) — policy hashes anchored on every update, spend epochs auto-anchored every 10 min (skip-if-unchanged; manual `POST /epochs/commit` still forces one); deployed **keyless from the Circle DCW wallet** via `scripts/deploy-anchor-dcw.mjs` (Circle Smart Contract Platform); policy hashes + spend epochs signed via DCW contract-execution — no raw key. Verified on-chain: epoch commit [`0xdceaf6e6…`](https://testnet.arcscan.app/tx/0xdceaf6e6bbab8d00d8162829e9de8d66e72e45e4faec81e4891b7a2d81fc32a8), **From = DCW wallet `0x7dbffb7d…`**
 - [x] All four demo beats rehearsed: autonomous metering, 21.9% re-shop switch, injection denied at per-tx wall, human approval hold/release
 - [x] Deployed: https://autopilotdashboard-production.up.railway.app (dashboard) · https://autopilotsigner-production.up.railway.app (signer API) — Railway ×4, mode=circle, volume-backed ledger
 - [ ] 3-min video + submission form
@@ -163,15 +163,48 @@ Apache-2.0. Patterns adapted from Circle's Apache-2.0 samples (arc-escrow, arc-f
 
 1. **Agent ↔ SpendGuard:** the agent is untrusted (LLM, injectable). It has no keys, no Circle SDK, no chain RPC — only `POST /pay` with a stated reason. A compromised agent can *ask*; it cannot *take*.
 2. **SpendGuard ↔ chain:** policy is evaluated before any signature exists. In `SIGNER_MODE=circle` the private key doesn't exist in our stack at all — Circle Wallets holds it; SpendGuard holds only the *decision* to sign. This covers **both** payment signatures **and** the on-chain anchor transactions (both go through Circle contract-execution — no raw key).
-3. **Auditability:** every decision (allow/hold/deny + code) is ledgered; policy hashes are anchored in `SpendAnchor` on Arc on every update, and SpendGuard auto-commits a spend epoch every 10 minutes when spend changed (`EPOCH_COMMIT_INTERVAL_MS`; skip-if-unchanged so every anchored epoch marks real movement) — the anchor transactions are signed by the Circle DCW wallet, not a raw key. The dashboard's story is externally verifiable and cannot silently go stale.
+3. **Auditability:** every decision (allow/hold/deny + code) is ledgered; policy hashes are anchored in `SpendAnchor` on Arc on every update, and SpendGuard auto-commits a spend epoch every 10 minutes when spend changed (`EPOCH_COMMIT_INTERVAL_MS`; skip-if-unchanged so every anchored epoch marks real movement) — the anchor transactions are signed by the Circle DCW wallet, not a raw key (verified live: epoch tx [`0xdceaf6e6…`](https://testnet.arcscan.app/tx/0xdceaf6e6bbab8d00d8162829e9de8d66e72e45e4faec81e4891b7a2d81fc32a8), From = DCW wallet `0x7dbffb7d…`). The dashboard's story is externally verifiable and cannot silently go stale.
 
 ## Payment sequence (happy path)
 
 agent `POST /pay` → SpendGuard fetches URL → seller 402 + PAYMENT-REQUIRED (price from live tier) → SDK selects GatewayWalletBatched option → **hook: policy.evaluate()** → allow → sign EIP-3009 (validBefore ≥ 7d) → retry with payment → seller `settle()` via Gateway → 200 + data → ledger entry + transfer UUID → dashboard.
 
-## Cross-chain extension (diagrammed, not in MVP)
+## Autonomous cross-chain treasury (CCTP) — built
 
-Gateway's crosschain `withdraw()` lets the owner top up the agent's budget from any Gateway-supported chain (CCTP/Bridge Kit rails) — the agent's spending chain stays Arc.
+When the agent's Arc Gateway balance drops below a floor, it refills itself instead of stalling:
+
+```
+agent tick → treasury.ts: gateway available < TREASURY_MIN_USDC?
+   └─ yes → POST /treasury/topup → SpendGuard (cctp.ts, DCW contract-execution):
+        source chain: USDC.approve → TokenMessenger.depositForBurn(→ Arc domain)
+        Circle IRIS attestation
+        Arc: MessageTransmitter.receiveMessage → USDC minted to agent → /deposit into Gateway
+```
+
+The decision + orchestration run in the agent loop (keyless); the burn/mint execute inside SpendGuard
+via Circle DCW contract-execution — no raw key, same custody boundary as payments and anchoring. This
+adds **CCTP** to the stack and makes treasury management part of the autonomous economy ("keep yourself
+funded"). Live execution needs a funded DCW wallet on the source chain plus the CCTP v2 testnet
+addresses/domain for that chain (env in `.env.example`); until configured it is a code-complete,
+architecture-level integration.
+
+## Tokenized-treasury & FX extensions (enterprise-gated — wired behind flags, testable on access grant)
+
+These are **code-complete and endpoint-wired**, gated off by a feature flag. The moment Circle grants
+access, set the env values from the gated docs and flip the flag — no rebuild, testable then and there.
+
+- **USYC (tokenized yield)** — `signer/src/usyc.ts`, flag `USYC_ENABLED`. Idle budget between renewals earns
+  nothing; the agent parks a reserve in **USYC** and redeems ahead of the next renewal — autonomous cash
+  management with a yield leg. Endpoints `POST /treasury/yield/invest` · `/redeem`, executed from the DCW
+  wallet via contract-execution (no raw key). Contract address + ABI signatures are env-driven so the exact
+  gated ABI drops in without code changes. Until enabled, endpoints return a clean "not configured".
+- **StableFX (cross-currency settlement)** — `signer/src/stablefx.ts`, flag `STABLEFX_ENABLED`. The sellers
+  are FX-rate services, so the agent quotes in the buyer's currency and settles in the seller's, hedged via
+  **StableFX**. Endpoints `POST /fx/quote` · `/fx/settle`, behind SpendGuard's custody + policy boundary.
+  Base URL / paths are env-driven. Until enabled, endpoints return a clean "not configured".
+
+Both are presented as architecture-level integrations (permitted by the hackathon's conceptual-integration
+allowance) but are one env-flip from a live test.
 
 
 ════════════════════════════════════════════

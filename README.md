@@ -89,14 +89,14 @@ open http://localhost:3000                         # 4. burn-down, savings, rece
 
 **USDC on Arc** — settlement asset *and* gas token. The anchor-contract transactions are paid in USDC (18-decimal gas / 6-decimal ERC-20 duality noted in FEEDBACK.md).
 
-**CCTP / Bridge Kit** — architecture extension (not in MVP): cross-chain budget top-ups via Gateway's crosschain `withdraw()`; see `ARCHITECTURE.md`.
+**CCTP / Bridge Kit** — autonomous cross-chain treasury: when the Arc Gateway balance runs low the agent pulls USDC from a source chain (approve → `depositForBurn` → IRIS attestation → `receiveMessage`) via DCW contract-execution (`packages/signer/src/cctp.ts`, agent trigger in `treasury.ts`). Orchestration live; cross-chain execution one funded source-wallet away. See `ARCHITECTURE.md`.
 
 ## Status / roadmap
 
 - [x] Scaffold: all services, policy engine, approval queue, re-shop, dashboard, contract
 - [x] **Day 0:** `verify-day0.sh` E2E on Arc Testnet (kill criterion cleared)
 - [x] Day 1: DCW-EOA signing verified against Gateway settle E2E (`SIGNER_MODE=circle`) — including DCW-native Gateway deposit via contract-execution API
-- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xf550a882da3c26fbacd1b68aa83867102206b143`](https://testnet.arcscan.app/address/0xf550a882da3c26fbacd1b68aa83867102206b143) — policy hashes anchored on every update, spend epochs auto-anchored every 10 min (skip-if-unchanged; manual `POST /epochs/commit` still forces one); deployed with `scripts/deploy-anchor.mjs` (solc + viem, no Foundry required)
+- [x] Day 4: `SpendAnchor` live on Arc Testnet at [`0xf550a882da3c26fbacd1b68aa83867102206b143`](https://testnet.arcscan.app/address/0xf550a882da3c26fbacd1b68aa83867102206b143) — policy hashes anchored on every update, spend epochs auto-anchored every 10 min (skip-if-unchanged; manual `POST /epochs/commit` still forces one); deployed **keyless from the Circle DCW wallet** via `scripts/deploy-anchor-dcw.mjs` (Circle Smart Contract Platform); policy hashes + spend epochs signed via DCW contract-execution — no raw key. Verified on-chain: epoch commit [`0xdceaf6e6…`](https://testnet.arcscan.app/tx/0xdceaf6e6bbab8d00d8162829e9de8d66e72e45e4faec81e4891b7a2d81fc32a8), **From = DCW wallet `0x7dbffb7d…`**
 - [x] All four demo beats rehearsed: autonomous metering, 21.9% re-shop switch, injection denied at per-tx wall, human approval hold/release
 - [x] Deployed: https://autopilotdashboard-production.up.railway.app (dashboard) · https://autopilotsigner-production.up.railway.app (signer API) — Railway ×4, mode=circle, volume-backed ledger
 - [ ] 3-min video + submission form
