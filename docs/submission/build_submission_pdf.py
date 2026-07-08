@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Builds the Ignyte submission package from the Claude-designed assets.
+"""Builds the Ignyte submission package.
 
-  python3 build_submission_pdf.py
-    1. renders one_pager.pdf, deck.pdf, diagram_1a.pdf (design_assets.py)
-    2. exports diagram_1a.pdf -> ../architecture.png (200 dpi, needs pdftoppm; skipped if absent)
-    3. builds annex.pdf (submission details + demo guide + Circle Product Feedback)
-    4. merges one-pager + deck + annex -> Ignyte-Submission-Subscription-Autopilot.pdf
+NOTE: the original generators (design_assets.py, deck.pdf) were intentionally
+removed to slim the submission folder, so this script no longer regenerates the
+full combined PDF end-to-end. The shipped deliverables it produced still live in
+this folder: Ignyte-Submission-Subscription-Autopilot.pdf, one_pager.pdf,
+submission_details.pdf, circle_product_feedback.pdf, architecture.png, images/.
+Kept for reference / annex regeneration only.
 
 Set VIDEO_LINK below before final submission, then regenerate.
 """
@@ -21,7 +22,13 @@ from reportlab.lib.units import mm
 from reportlab.platypus import (HRFlowable, PageBreak, Paragraph,
                                 SimpleDocTemplate, Spacer, Table, TableStyle)
 
-import design_assets
+try:
+    import design_assets
+except ImportError:
+    import sys
+    sys.exit("design_assets.py was removed from this folder; the combined-PDF "
+             "regeneration step is no longer available. The final deliverables "
+             "already exist in docs/submission/ (see the module docstring).")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "Ignyte-Submission-Subscription-Autopilot.pdf")
@@ -100,7 +107,7 @@ def build_annex(path):
         P("Documentation", "h2"),
         P("README.md — zero-to-running setup and per-product integration notes with file references · ARCHITECTURE.md — "
           "component spec and trust boundaries · PRD.md — product spec, acceptance criteria, risk log · DEPLOYMENT.md — "
-          "the exact deployment runbook used · docs/demo-script.md — video script · docs/submission/ — this document's sources."),
+          "the exact deployment runbook used · docs/submission/ — this document's sources."),
         P("Judge quick-verify (no setup): open the dashboard; curl " + SIGNER_API + "/summary; click the SpendAnchor link on arcscan.", "small"),
 
         PageBreak(),

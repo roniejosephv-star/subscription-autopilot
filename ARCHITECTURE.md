@@ -1,6 +1,6 @@
 # Architecture — Subscription Autopilot
 
-*(Export this as `docs/architecture.png` for the submission — draw.io / excalidraw.)*
+*(Rendered image for the submission: `docs/submission/architecture.png`.)*
 
 ```
                         ┌────────────────────────────────────────────┐

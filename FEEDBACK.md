@@ -27,14 +27,18 @@
 - Arc deposit finality (~0.5s) makes the deposit→pay loop feel instant; contract executions via the Wallets API confirmed in well under a minute
 
 ## What could be improved
+- **SDK Error Transparency**: When executing raw contract transactions via `createContractExecutionTransaction` or generating signatures via `signTypedData`, failures (e.g., mismatching types or gas limits) return nested and generic error messages. Surfacing the raw EVM revert reason or explicit parameter validation errors would speed up debugging.
+- **Gas Duality Complexity**: On Arc, gas is paid in USDC but scaled to 18 decimals, whereas the asset itself uses 6 decimals. Developers must constantly convert between `formatUnits(..., 18)` for gas and `formatUnits(..., 6)` for balances. The SDK should provide built-in scaling helper methods to prevent decimal calculation mismatches.
+- **Facilitator Connection Resilience**: Local dev loops are highly dependent on the responsiveness of the Gateway Testnet Facilitator. During periods of testnet congestion, `/pay` requests can time out without clear indication of whether the issue lies on the local side or the remote API.
 - **Custody-native parity across products.** The best moments were when a Circle-custodied (DCW) wallet could do the whole job; the rough ones were where a product still assumed a raw key or a specific account type — `GatewayClient.deposit()` (finding 9), Gas Station vs x402 account-type split (13), and CCTP's multi-step manual flow (14). Closing these would let an agent run end-to-end with **zero raw key** across payments, deposits, anchoring, and cross-chain — which is exactly what we had to hand-build.
 - **Discoverability of deployment + execution.** Splitting `deployContract` and `createContractExecutionTransaction` across two packages (finding 10) cost real time; the mental model "wallets do execution, a different client does deployment" isn't stated anywhere obvious.
 - **Error specificity.** Two 400s named no field (`deployContract` empty array, finding 11; the `signTypedData` EIP712Domain rejection, finding 8). Field-level errors would have saved hours.
 - **Docs single-source-of-truth.** Signature-validity numbers disagree across pages (finding 2); x402 hooks live off-site (finding 6); an undocumented header ships in the types (finding 5). One authoritative reference per product would help.
 
 ## Recommendations
-1. Ship a **DCW-native path for every money movement** (deposit, CCTP burn/mint, contract deploy) so agentic apps can run keyless end-to-end — we proved it's possible but had to assemble it from `createContractExecutionTransaction` primitives.
+1. Ship a **DCW-native path for every money movement** (deposit, CCTP burn/mint, contract deploy) so agentic apps can run keyless end-to-end — we proved it's possible but had to assemble it from `createContractExecutionTransaction` primitives (findings 9, 10, 14).
 2. Add a **runtime hint when an SCA wallet is used with Nanopayments** (and vice-versa for Gas Station) — the EOA/SCA fork silently fails today (findings 1, 13).
 3. Return **field-level validation errors** from `deployContract` and `signTypedData` (findings 8, 11).
 4. **Cross-link the Wallets and Smart Contract Platform clients**, and let the Console pick any dev-controlled wallet as contract deployer (findings 10, 12).
 5. Provide **minimal single-process reference apps** per product (finding 4) and a **canonical constants/validity reference** (findings 2, 3, 5, 6).
+

@@ -144,7 +144,7 @@ Every payment is authorized by **SpendGuard**, an out-of-process policy-gated si
 subscription-autopilot/
 ├── README.md                  ← setup + Circle integration docs (§9/§10 of this PRD seed it)
 ├── PRD.md                     ← this document
-├── ARCHITECTURE.md            ← diagram (export §6 as image too: docs/architecture.png)
+├── ARCHITECTURE.md            ← diagram (rendered image: docs/submission/architecture.png)
 ├── FEEDBACK.md                ← "Circle Product Feedback" (running log; 7 items pre-seeded)
 ├── .env.example               ← every env var documented, no secrets
 ├── package.json               ← npm workspaces root
@@ -180,8 +180,9 @@ subscription-autopilot/
 │   ├── verify-day0.sh         ← quickstart E2E check (kill criterion)
 │   └── seed-demo.ts           ← subscriptions + price-drift scenario for the video
 └── docs/
-    ├── architecture.png
-    └── demo-script.md         ← the 4-beat video script
+    └── submission/           ← final deliverables: combined PDF, one-pager,
+                                submission_details.pdf, circle_product_feedback.pdf,
+                                architecture.png, images/
 ```
 
 **Mapping note for the local Cowork folder (`IgniteChalange/`):** `STRATEGY.md` (research trail), `PRD.md` (this file), and `Support Directories/` (read-only reference samples — NOT committed to the repo; they're Circle's code, pattern-borrow only with license headers respected: all Apache-2.0).
@@ -269,8 +270,8 @@ Day 0: verify-day0 E2E or reconvene on Track 2 · Day 1: signer service + DCW si
 - [ ] Circle Developer Account email → **create Day 0**
 - [ ] Products used: USDC ✓ Wallets ✓ Gateway ✓ Nanopayments ✓ (CCTP/Bridge Kit: architecture extension — only tick if F13 ships)
 - [ ] Functional MVP (frontend + backend) → F1–F8
-- [x] Architecture diagram → docs/architecture.png
-- [ ] Video + presentation → docs/demo-script.md (4-beat arc)
+- [x] Architecture diagram → docs/submission/architecture.png
+- [x] Video + presentation → hosted demo video (script beats captured in docs/submission/images/)
 - [x] GitHub repo w/ setup + Circle integration docs → §9 + §10 seed the README
 - [x] Demo URL → Railway (all four services): https://autopilotdashboard-production.up.railway.app
 - [x] "Circle Product Feedback" section → FEEDBACK.md (§12 seed)

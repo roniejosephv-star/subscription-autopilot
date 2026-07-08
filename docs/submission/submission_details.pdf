@@ -1,32 +1,25 @@
-%PDF-1.4
+%PDF-1.3
 %‚„œ”
 1 0 obj
 <<
-/Producer (pypdf)
-/Title (Subscription Autopilot \204 Submission details)
-/Author (Ronie Joseph)
+/Type /Catalog
+/Pages 2 0 R
 >>
 endobj
 2 0 obj
 <<
 /Type /Pages
 /Count 1
-/Kids [ 4 0 R ]
+/Kids [ 3 0 R ]
 >>
 endobj
 3 0 obj
 <<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-4 0 obj
-<<
-/Annots [ 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R ]
-/Contents 11 0 R
+/Annots [ 4 0 R 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 18 0 R ]
+/Contents 17 0 R
 /MediaBox [ 0 0 595.2756 841.8898 ]
 /Resources <<
-/Font 12 0 R
+/Font 11 0 R
 /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >>
 /Rotate 0
@@ -36,7 +29,7 @@ endobj
 /Parent 2 0 R
 >>
 endobj
-5 0 obj
+4 0 obj
 <<
 /A <<
 /S /URI
@@ -49,7 +42,7 @@ endobj
 /Type /Annot
 >>
 endobj
-6 0 obj
+5 0 obj
 <<
 /A <<
 /S /URI
@@ -62,7 +55,7 @@ endobj
 /Type /Annot
 >>
 endobj
-7 0 obj
+6 0 obj
 <<
 /A <<
 /S /URI
@@ -75,7 +68,7 @@ endobj
 /Type /Annot
 >>
 endobj
-8 0 obj
+7 0 obj
 <<
 /A <<
 /S /URI
@@ -88,7 +81,7 @@ endobj
 /Type /Annot
 >>
 endobj
-9 0 obj
+8 0 obj
 <<
 /A <<
 /S /URI
@@ -101,7 +94,7 @@ endobj
 /Type /Annot
 >>
 endobj
-10 0 obj
+9 0 obj
 <<
 /A <<
 /S /URI
@@ -114,7 +107,7 @@ endobj
 /Type /Annot
 >>
 endobj
-11 0 obj
+10 0 obj
 <<
 /Filter [ /ASCII85Decode /FlateDecode ]
 /Length 2922
@@ -123,15 +116,15 @@ stream
 Gatm=D/\/g')p`p0d#iWS6]>2ok(2B!gb6O[u7Ub'DHe\(c]kTA$_:cQ'@I,If0aJ=a&6GFV5oaSCf#uprpr<cd2f"r#t3H=oc2U_r3ZY`.RRpOMD01HjZY=X7*5_qd_[.>gJHn(e1bDqI+p?n7.6`,`)eKYAOsa&qc^f_ECJ'AdIDu9mAoiD8PnOJ_jro/\"\`P`W/=nm!3Np`#0Ae[@^&c^OgRM%VJX5<RP;48\4trh-Y3TCN'0#pG+]'?<ZQ"+2j,al)I9=,qH>(kInG6SAl<eI.#*>DW8@]'TFi0"JI)n*dVDd=A>N$c9rn-_C>Xhheu8d.au02]Qi7mLe,do7/q2G'DEtY)0_a,*SCs8PJT.[#?\^dF2"@7k8F3-?`Jh#%lmtde%iq!YR/.gb:!,0M!6%$t/(?6[6dR%7`3Tei\X`.S<Ph@!#I)a]Y#e_!3nBksi])!`u;LIR#lj'&DI\/aFFMG_+h/?sJMN1\als<m>($;^*$AK.Vj*6gq"_8bDeGO1@r*"t/bljT8jt>4!?,WG$GUK#IP<6#%7N)&-uf4Y)U-SQ$<XE!X-?Kt`87Os4\i>!\oc[_pKIK8ohV7_IAW=`3(:FL.=\qf6t&N$T&Fi@E/oL+Z/GfeOrX/<!a>Hp=)?fVdTTRbcDGrT=hG77A!rQB>Kt(V$&^%c,%I+QkZlId&&G$^qO%N(RF%*&p,'T=9k>[B;aA-qL12C66^i0;4\jW^`_^?7I^b^(_;Ca<h-%I(B0uHJNFe=jq*1hYl&DH-7MW@*7WEbhstK1Y%7!93siXCE":+ZBAHITP;Q5EjeEkNV6E<V](_W'gff3eU/jFbdQ$V.cbA?GcmZHpN1eW)'5<h*QEZ6S_3S^`Ht8WN^!rG5RpBT"B#&G%[T6mb.Ol-p%n/S8$(^\W4O8_g'gGRiA?fEZ%ar***Q?HJ;s<R74p)kB($]2"-1Yk+LG-)c$?l.Y+6(V#M$k$)CI0C<Uj4K[C6aq6e)kSQ&@687f-srms4k%1I[:"$,p\b`GC=oRe=@eMCq+4eJYRRbuF<1iB#3oO:*<83E<'>Pm2N\iP,QJ?sfk(BF;9.)&#5io@ZV3LLTT9jNR1)79.T?0(='sk\+@OJM.h;8<e0r@_>PX0o9_]9`tWH9=(t1V1%'.]EVQ:F!5a(6bsgB%>QWZs2h6Pf]U=8%.;qO(qL@pBiBU!XGhfe[[rZ485*![.])6-Q1`'MD_io@fY_o(Y<Ak`jWSJbdoj,&oKLpkL2Pq[Y(oQlW.NnmbE#0/q##(D>u&7&*3;l/0:RX0$@.V/"?ug_'d=NrEj<E;TVrcHE"ohA7PL(dG4U[*oZWAjFjILmS4>mn8^JF.FV9ma6/Xh%*3S/HfiJ4uM;uQ`"K8qr<TfB5Y^GVh/CgMpB2i9cBg='FR0n=sgfS&%_f%6JJP?*?`S51Q"X%]F#bYu+5\i&mCp(8a."uME+t8cpPMLp]:OBS)%T'%Jd*kPs;>^k;X)!(fau,;B3U"Af_5D$qOl[_'Zh4?996!=?pti60oq<!H*YpYDq^*3-:hOmLJ3/0?V)cs=Hh2;XN5%iNJ8Oj\Y5J4MMTHg79Ipl0:d<BsJu#jc]G$8]+*/.$RVaZ.S=R!MF_tZ+p;%!9e8ZK9H\on4l8c?bCO3>uQ_.&6[YP\sgmJ3R"H$^0-u6=)GuHC2nVsP;[X\D_H=rEl\GYjqe*,e@+4!\O^Sc7n0blVCE'>*O%m(keG4\pt*@Jm7@<?\BD[T?Bi=,7s0msA<%B,<IKCQU`in%A^;I-!:aY\o($'G=G4Yd<@J.-*VWOAC1.2K!,H[RFm0,h@<JK*jQ_E\8QFOI]T;ouh`TnhcL4Mn<9(CFJ,3*+\<)0@[EAr@W6MB)4s@7$h%G&%QoPC'tE8!G=Y1chhbPG[!^S6'WjFukNuCeSr"K1KYXR$3H_3KjmDS2=k/k!E47?=O0mLGGF5p(3\WB[3gSr3QQqq=-V>7EUK#DuuTQR%:r_l5t7/>.#QK0<oVGLf\n8etC+25sgWlhY<Fh/"OL9'\8Y,W%h"$F%s67J$u`+mVWZ\D:@;dn\(i-*@Am<C[UR/78MglpE*W2KKD+Zp8@/3*T'Xpc=U$Sk=1gPK&GX>cnk]I(I&FAK"6!@j"#jfBTC(']b+@6I;$Up<&:(!=cFNP8mg(NVWpO"j1eQ$DC4uZ")8*ICL*@0;uO.]5(<&[ej_($p*PI;7*TqoEp2orb"Dhp-AE3`!*QXFb_PY=#>\+-0PWgu\;>+dfN42DEs"I?j"moZ0c)ieVm)6AF-ce7\Yr_=RkRT`*c[?mG-S9fP<)g=K=-\^Yb%#k7DuYI3NDC^=3Fl'r8E*VE@s[WeH9-,A#Z'""?$Qt)TjjFP-NGW^tOH0kBhWdPU3o-]YSdh&,i%-#+lXC.1F.FSTiBMB3<XaRl:Mi5%h564$6s56MEXl?'`?8lRgfh0$+/65t"[WrB,U+S-:gin*N^X.XHa'&h-D-!Rj1JZ[Sf=,YK#YlF,rdim<Pe,V381j!r;U@7b9X6+PSB0pl-Afidf7:cD-6A/OaD.uUd^A@\8?<p!!GN8Z:Clp.j7MV-UXG;2->q)EDPb[UBt-H,sRQYafB",M9,W=6Yol8f=g:X*M"G`2u$1DDUk*3M89#0B^<l0iQ?rQF/pMrR#cN(:qK0,H-[qEA&HRd@7P;]A;bH5<@ZjVX8qh$)(W::`ke0D(FA\N?s//cGc4(\T1Nq^]q2e[8/C[b$Pb:XB%:3;PK"p+go78(5&7DarF>iMT"IRkFj0b"SVrd+m%$];fb^]s=n]hES2HU:N"(&"!!O+0mfc.(p<e08+'F2&Hiugm8A`96A*\of@34plS/Volo+Jn?EY/PYLUB4b@,&kNVZTaF/KY?O@bBah_a(==j3Gk7+5Hbi.6AV77T"o6On<lDiZ<PjmsV)akD$~>
 endstream
 endobj
-12 0 obj
+11 0 obj
 <<
-/F1 13 0 R
-/F2 14 0 R
-/F3 15 0 R
-/F4 16 0 R
+/F1 12 0 R
+/F2 13 0 R
+/F3 14 0 R
+/F4 15 0 R
 >>
 endobj
-13 0 obj
+12 0 obj
 <<
 /BaseFont /Helvetica
 /Encoding /WinAnsiEncoding
@@ -140,7 +133,7 @@ endobj
 /Type /Font
 >>
 endobj
-14 0 obj
+13 0 obj
 <<
 /BaseFont /Helvetica-Bold
 /Encoding /WinAnsiEncoding
@@ -149,7 +142,7 @@ endobj
 /Type /Font
 >>
 endobj
-15 0 obj
+14 0 obj
 <<
 /BaseFont /Helvetica-Oblique
 /Encoding /WinAnsiEncoding
@@ -158,7 +151,7 @@ endobj
 /Type /Font
 >>
 endobj
-16 0 obj
+15 0 obj
 <<
 /BaseFont /Symbol
 /Name /F4
@@ -166,31 +159,366 @@ endobj
 /Type /Font
 >>
 endobj
+16 0 obj
+<<
+/Producer (pypdf)
+/Title (Subscription Autopilot \204 Submission details)
+/Author (Ronie Joseph)
+>>
+endobj
+17 0 obj
+<<
+/Length 8115
+>>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 57.02362 768.5354 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 7 Tm /F2 15 Tf 22 TL (Submission details) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56.69291 520.0354 cm
+q
+1 1 1 rg
+n 0 242.5 481.8898 -20.5 re f*
+.941176 .937255 .92549 rg
+n 0 222 481.8898 -20.5 re f*
+1 1 1 rg
+n 0 201.5 481.8898 -33 re f*
+.941176 .937255 .92549 rg
+n 0 168.5 481.8898 -45.5 re f*
+1 1 1 rg
+n 0 123 481.8898 -20.5 re f*
+.941176 .937255 .92549 rg
+n 0 102.5 481.8898 -20.5 re f*
+1 1 1 rg
+n 0 82 481.8898 -20.5 re f*
+.941176 .937255 .92549 rg
+n 0 61.5 481.8898 -20.5 re f*
+1 1 1 rg
+n 0 41 481.8898 -20.5 re f*
+.941176 .937255 .92549 rg
+n 0 20.5 481.8898 -20.5 re f*
+0 0 0 rg
+BT /F1 10 Tf 12 TL ET
+q
+1 0 0 1 6 226 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (Track) Tj T* ET
+Q
+Q
+q
+1 0 0 1 125.0551 226 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F1 9 Tf 12.5 TL (4 \227 Best Agentic Economy Experience on Arc) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 205.5 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (Participant) Tj T* ET
+Q
+Q
+q
+1 0 0 1 125.0551 205.5 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F1 9 Tf 12.5 TL (Ronie Joseph \(solo\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 172.5 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 16 Tm /F2 9 Tf 12.5 TL (Circle Developer) Tj T* (Account) Tj T* ET
+Q
+Q
+q
+1 0 0 1 125.0551 185 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F1 9 Tf 12.5 TL (roniejosephv@gmail.com) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 152 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (Circle products used) Tj T* ET
+Q
+Q
+q
+1 0 0 1 125.0551 127 cm
+q
+BT 1 0 0 1 0 28.5 Tm 12.5 TL /F1 9 Tf .101961 .101961 .094118 rg (USDC \267 Wallets \(developer-controlled\) \267 Gateway \267 Nanopayments \(x402\) \227 all live &) Tj T* (load-bearing. CCTP \227 autonomous cross-chain treasury \(code-complete\). USYC \267) Tj T* (StableFX \227 wired behind flags, testable on enterprise access.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 106.5 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (Live demo \(dashboard\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 125.0551 106.5 cm
+q
+.203922 .313725 .607843 rg
+.203922 .313725 .607843 RG
+n 0 2.375 m 209.106 2.375 l S
+BT 1 0 0 1 0 3.5 Tm /F1 9 Tf 12.5 TL (https://autopilotdashboard-production.up.railway.app) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 86 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (SpendGuard API \(public\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 125.0551 86 cm
+q
+.203922 .313725 .607843 rg
+.203922 .313725 .607843 RG
+n 0 2.375 m 230.589 2.375 l S
+BT 1 0 0 1 0 3.5 Tm /F1 9 Tf 12.5 TL (https://autopilotsigner-production.up.railway.app/summary) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 65.5 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (GitHub repository) Tj T* ET
+Q
+Q
+q
+1 0 0 1 125.0551 65.5 cm
+q
+.203922 .313725 .607843 rg
+.203922 .313725 .607843 RG
+n 0 2.375 m 230.094 2.375 l S
+BT 1 0 0 1 0 3.5 Tm /F1 9 Tf 12.5 TL (https://github.com/roniejosephv-star/subscription-autopilot) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 45 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (Demo video) Tj T* ET
+Q
+Q
+q
+1 0 0 1 125.0551 45 cm
+q
+.203922 .313725 .607843 rg
+.203922 .313725 .607843 RG
+n 0 2.375 m 127.557 2.375 l S
+BT 1 0 0 1 0 3.5 Tm /F1 9 Tf 12.5 TL (https://youtu.be/54CQnXkyMNY) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 24.5 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (On-chain audit anchor) Tj T* ET
+Q
+Q
+q
+1 0 0 1 125.0551 24.5 cm
+q
+.203922 .313725 .607843 rg
+.203922 .313725 .607843 RG
+n 0 2.375 m 214.101 2.375 l S
+BT 1 0 0 1 0 3.5 Tm /F1 9 Tf 12.5 TL (SpendAnchor 0xf550\205b143 on Arc Testnet \(arcscan\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 4 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (Scope) Tj T* ET
+Q
+Q
+q
+1 0 0 1 125.0551 4 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F1 9 Tf 12.5 TL (Testnet demo \227 Arc Testnet, chain 5042002 \(gas = USDC\)) Tj T* ET
+Q
+Q
+q
+Q
+Q
+Q
+q
+1 0 0 1 57.02362 484.0354 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 7 Tm /F2 15 Tf 22 TL (Working MVP \227 deployed and verifiable now) Tj T* ET
+Q
+Q
+q
+1 0 0 1 57.02362 366.0354 cm
+q
+.203922 .313725 .607843 RG
+n 215.992 100.975 m 443.6852 100.975 l S
+n 119.2856 72.975 m 209.1614 72.975 l S
+BT 1 0 0 1 0 102.2 Tm 14 TL /F1 9.8 Tf .101961 .101961 .094118 rg (Frontend + backend live: the owner dashboard at ) Tj .203922 .313725 .607843 rg (https://autopilotdashboard-production.up.railway.app) Tj .101961 .101961 .094118 rg ( renders) Tj T* (the production ledger \(100+ settled nanopayments\), budget burn-down, approval queue, policy chain, and the) Tj T* (Gateway treasury balance; ) Tj .203922 .313725 .607843 rg (the public signer API) Tj .101961 .101961 .094118 rg ( serves the same data raw. Four services on Railway) Tj T* (\(SpendGuard signer, 3 x402 sellers, agent, dashboard\), SQLite ledger on a persistent volume. Custody mode) Tj T* (is SIGNER_MODE=circle \227 EIP-712 via Circle Wallets DCW EOA, verified against Gateway settlement on Arc) Tj T* (Testnet \(transfer 9bd6a149-1821-4341-a4aa-712cdc362382, 2026-07-06\). Spend epochs auto-anchor on Arc) Tj T* (every 10 minutes \227 signed keylessly by the DCW wallet \(SpendAnchor redeployed under DCW ownership; no) Tj T* (raw private key anywhere in the deployed stack, payments and anchoring alike\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 57.02362 338.0354 cm
+q
+.121569 .478431 .360784 rg
+BT 1 0 0 1 0 6.5 Tm /F2 11.5 Tf 18 TL (Demo guide \(the video's four beats, reproducible live\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56.69291 203.0354 cm
+q
+1 1 1 rg
+n 0 132 481.8898 -33 re f*
+.941176 .937255 .92549 rg
+n 0 99 481.8898 -33 re f*
+1 1 1 rg
+n 0 66 481.8898 -33 re f*
+.941176 .937255 .92549 rg
+n 0 33 481.8898 -33 re f*
+0 0 0 rg
+BT /F1 10 Tf 12 TL ET
+q
+1 0 0 1 6 115.5 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (1 \267 Delegation) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 103 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 16 Tm /F1 9 Tf 12.5 TL (Agent researches quotes, subscribes to the cheapest seller, meters per-call gasless) Tj T* (nanopayments.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 82.5 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (2 \267 Negotiation) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 70 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 16 Tm /F1 9 Tf 12.5 TL (Seller price drift ) Tj /F4 9 Tf 12.5 TL (\256) Tj /F1 9 Tf 12.5 TL ( at renewal the agent re-quotes all sellers at real volume and switches \(21.9%) Tj T* (cheaper per call\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 49.5 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (3 \267 Attack) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 37 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 16 Tm /F1 9 Tf 12.5 TL (Prompt-injected overspend ) Tj /F4 9 Tf 12.5 TL (\256) Tj /F1 9 Tf 12.5 TL ( denied at the per-tx policy wall; a $0.03 premium call is held ) Tj /F4 9 Tf 12.5 TL (\256) Tj /F1 9 Tf 12.5 TL T* (human Approve/Deny on the dashboard.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 16.5 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 3.5 Tm /F2 9 Tf 12.5 TL (4 \267 Proof) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 4 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 16 Tm /F1 9 Tf 12.5 TL (Burn-down, savings, denial log, Gateway receipts \227 and the epoch chip linking to the) Tj T* (SpendAnchor tx on arcscan.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+Q
+q
+1 0 0 1 57.02362 175.0354 cm
+q
+.121569 .478431 .360784 rg
+BT 1 0 0 1 0 6.5 Tm /F2 11.5 Tf 18 TL (Documentation) Tj T* ET
+Q
+Q
+q
+1 0 0 1 57.02362 116.0354 cm
+q
+.101961 .101961 .094118 rg
+BT 1 0 0 1 0 46.2 Tm /F1 9.8 Tf 14 TL (README.md \227 zero-to-running setup and per-product integration notes with file references \267) Tj T* (ARCHITECTURE.md \227 component spec and trust boundaries \267 PRD.md \227 product spec, acceptance criteria,) Tj T* (risk log \267 DEPLOYMENT.md \227 the exact deployment runbook used \267) Tj T* (docs/submission/ \227 this document's sources.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 57.02362 87.03543 cm
+q
+.290196 .290196 .270588 rg
+BT 1 0 0 1 0 15.4 Tm /F1 8.6 Tf 12 TL (Judge quick-verify \(no setup\): open the dashboard; curl https://autopilotsigner-production.up.railway.app/summary; click the) Tj T* (SpendAnchor link on arcscan.) Tj T* ET
+Q
+Q
+ 
+
+endstream
+endobj
+18 0 obj
+<<
+/Type /Annot
+/Subtype /Link
+/Rect [ 181.74801 564.6724 309.30501 577.6724 ]
+/Border [ 0 0 0 ]
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057youtu\056be\05754CQnXkyMNY)
+>>
+/P 3 0 R
+>>
+endobj
 xref
-0 17
+0 19
 0000000000 65535 f 
 0000000015 00000 n 
-0000000133 00000 n 
-0000000192 00000 n 
-0000000241 00000 n 
-0000000491 00000 n 
-0000000714 00000 n 
-0000000945 00000 n 
-0000001178 00000 n 
-0000001427 00000 n 
-0000001652 00000 n 
-0000001885 00000 n 
-0000004900 00000 n 
-0000004966 00000 n 
+0000000064 00000 n 
+0000000123 00000 n 
+0000000379 00000 n 
+0000000602 00000 n 
+0000000833 00000 n 
+0000001066 00000 n 
+0000001315 00000 n 
+0000001540 00000 n 
+0000001772 00000 n 
+0000004787 00000 n 
+0000004853 00000 n 
+0000004961 00000 n 
 0000005074 00000 n 
-0000005187 00000 n 
-0000005303 00000 n 
+0000005190 00000 n 
+0000005268 00000 n 
+0000005387 00000 n 
+0000013555 00000 n 
 trailer
 <<
-/Size 17
-/Root 3 0 R
-/Info 1 0 R
+/Size 19
+/Root 1 0 R
+/Info 16 0 R
 >>
 startxref
-5381
+13762
 %%EOF
