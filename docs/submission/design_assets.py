@@ -140,7 +140,7 @@ def diagram(path):
     # ARC
     rrect(c, 646, Y(742), 400, 106, PUR, PUR_BG)
     c.setFillColor(INK); c.setFont(HELB, 15); c.drawCentredString(846, Y(662), "ARC TESTNET — SpendAnchor.sol")
-    para(c, "<font face='Courier' size='11.5'>0xfe18…e435</font> · anchorPolicy(hash) · commitEpoch(n, root, spent)<br/>tamper-evident audit of every policy version + spend epoch",
+    para(c, "<font face='Courier' size='11.5'>0xf550…b143</font> · anchorPolicy(hash) · commitEpoch(n, root, spent)<br/>tamper-evident audit of every policy version + spend epoch",
          656, Y(672), 380, size=12, color=MUT, align=1, leading=18.5)
 
     c.setFillColor(GRAY); c.setFont(MONO, 11.5); c.drawString(276, Y(796), "verify + settle (batched)")
@@ -216,9 +216,10 @@ def one_pager(path, video_link):
     # CIRCLE STACK table
     h2("CIRCLE STACK — REAL, LOAD-BEARING INTEGRATIONS")
     rows = [("Nanopayments / x402", "Core rail — per-request dynamic pricing; policy enforced in the <font face='Courier'>onBeforePaymentCreation</font> hook, inside SpendGuard's trusted process."),
-            ("Circle Wallets (DCW)", "Key custody — EIP-712 signing on a developer-controlled EOA; no raw private key exists anywhere in the stack."),
+            ("Circle Wallets (DCW)", "Key custody — EIP-712 signing on a developer-controlled EOA; no raw private key exists anywhere in the stack — payments <i>and</i> on-chain anchoring alike."),
             ("Circle Gateway", "Settlement + treasury — gas-free EIP-3009 authorizations, batch-settled onchain, transfer UUID receipts."),
-            ("USDC on Arc", "Settlement asset <i>and</i> gas token — audit-anchor transactions are themselves paid in USDC.")]
+            ("USDC on Arc", "Settlement asset <i>and</i> gas token — audit-anchor transactions are themselves paid in USDC."),
+            ("CCTP · USYC · StableFX", "Autonomous cross-chain treasury (CCTP, built) + tokenized-yield and FX legs (USYC / StableFX) wired behind flags, testable on access.")]
     for name, role in rows:
         c.setFillColor(INK); c.setFont(HELB, 10.5); c.drawString(M, y - 10, name)
         h = para(c, role, M + 132, y, cw - 132, size=10.5, color=MUT, leading=13.5)
@@ -228,7 +229,7 @@ def one_pager(path, video_link):
 
     # VERIFIED
     h2("VERIFIED ON ARC TESTNET — LIVE DEPLOYMENT")
-    y -= para(c, "<font color='#1f7a5c'><b>✓</b></font> Full E2E loop (Day-0 gate, <font face='Courier'>verify-day0.sh</font>)&nbsp;&nbsp; <font color='#1f7a5c'><b>✓</b></font> DCW signing verified against Gateway settlement&nbsp;&nbsp; <font color='#1f7a5c'><b>✓</b></font> All four demo beats live in production — metering, 21.9% switch, injection denied, human hold/release&nbsp;&nbsp; <font color='#1f7a5c'><b>✓</b></font> SpendAnchor live: <font face='Courier' size='9.5'>0xfe18f3c42f9318f20cae9cd5b2983e229554e435</font>",
+    y -= para(c, "<font color='#1f7a5c'><b>✓</b></font> Full E2E loop (Day-0 gate, <font face='Courier'>verify-day0.sh</font>)&nbsp;&nbsp; <font color='#1f7a5c'><b>✓</b></font> Keyless payments + on-chain anchoring verified (DCW-signed)&nbsp;&nbsp; <font color='#1f7a5c'><b>✓</b></font> All four demo beats live in production — metering, 21.9% switch, injection denied, human hold/release&nbsp;&nbsp; <font color='#1f7a5c'><b>✓</b></font> SpendAnchor live: <font face='Courier' size='9.5'>0xf550a882da3c26fbacd1b68aa83867102206b143</font>",
               M, y, cw, size=10.5, color=INK, leading=16) + 8
 
     c.setStrokeColor(LBRD); c.line(M, y, W - M, y); y -= 10
@@ -353,9 +354,9 @@ def deck(path):
 
     # ── 6 · CIRCLE STACK
     bg(PAPER)
-    h2("Four Circle products, each doing real work")
+    h2("Four core Circle products, each load-bearing")
     cards = [("Nanopayments / x402", "Core rail. Seller middleware re-resolves price per request; the <font face='Courier'>onBeforePaymentCreation</font> hook runs inside SpendGuard's trusted process — enforcement behind the custody wall."),
-             ("Circle Wallets (DCW)", "Key custody. EIP-712 signing via <font face='Courier'>signTypedData</font> on a developer-controlled EOA — no raw private key exists anywhere in the stack."),
+             ("Circle Wallets (DCW)", "Key custody. EIP-712 signing via <font face='Courier'>signTypedData</font> on a developer-controlled EOA — no raw private key anywhere in the stack: payments <i>and</i> on-chain anchoring alike."),
              ("Circle Gateway", "Settlement + treasury. One deposit funds the agent; every payment after is a gas-free EIP-3009 authorization, batch-settled onchain with transfer UUID receipts."),
              ("USDC on Arc", "Settlement asset <i>and</i> gas token — the SpendAnchor audit transactions themselves are paid in USDC on Arc Testnet.")]
     cw6 = (W - 2 * P - 16) / 2; chh = 165
@@ -364,6 +365,8 @@ def deck(path):
         rrect(c, x, yy - chh, cw6, chh, LBRD, HexColor("#ffffff"), r=8, lw=1)
         c.setFillColor(INK); c.setFont(HELB, 17); c.drawString(x + 22, yy - 32, t)
         para(c, body, x + 22, yy - 44, cw6 - 44, size=13.5, color=MUT, leading=20)
+    para(c, "<b>+ CCTP</b> — autonomous cross-chain treasury top-ups (built). <b>USYC + StableFX</b> — tokenized-yield &amp; cross-currency FX legs, wired behind feature flags and testable the moment enterprise access is granted.",
+         P, H - 110 - 2 * (chh + 14) - 6, W - 2 * P, size=13, color=MUT, leading=19)
     c.showPage()
 
     # ── 7 · DEMO BEATS
@@ -386,9 +389,9 @@ def deck(path):
     bg(PAPER)
     h2("Verified end-to-end on Arc Testnet")
     checks = ["Full E2E loop cleared Day 0 — verify-day0.sh",
-              "Circle Wallets DCW signing verified against Gateway settlement — no raw key in the stack",
+              "Keyless: DCW signs payments AND on-chain anchors — no raw key in the deployed stack",
               "All four demo beats live in production: metering, 21.9% switch, injection denied, human hold/release",
-              "SpendAnchor live — policy hashes + spend epochs auto-anchored every 10 minutes"]
+              "SpendAnchor DCW-owned — epochs auto-anchored every 10 min, signed keylessly (verified on-chain)"]
     y = H - 125
     for t in checks:
         c.setFillColor(GRN); c.setFont(MONB, 16); c.drawString(P, y, "✓")
@@ -396,7 +399,7 @@ def deck(path):
         y -= 42
     rrect(c, P, y - 88, 620, 74, PUR, PUR_BG, r=8, lw=1.5)
     c.setFillColor(PUR); c.setFont(MONO, 11); c.drawString(P + 22, y - 40, "SPENDANCHOR.SOL · ARC TESTNET")
-    c.setFillColor(INK); c.setFont(MONB, 15.5); c.drawString(P + 22, y - 66, "0xfe18f3c42f9318f20cae9cd5b2983e229554e435")
+    c.setFillColor(INK); c.setFont(MONB, 15.5); c.drawString(P + 22, y - 66, "0xf550a882da3c26fbacd1b68aa83867102206b143")
     c.showPage()
 
     # ── 9 · CLOSE

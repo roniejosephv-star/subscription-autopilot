@@ -33,7 +33,7 @@ VIDEO_LINK = "TODO — paste hosted demo-video URL, then regenerate"
 REPO = "https://github.com/roniejosephv-star/subscription-autopilot"
 DEMO = "https://autopilotdashboard-production.up.railway.app"
 SIGNER_API = "https://autopilotsigner-production.up.railway.app"
-ANCHOR = "https://testnet.arcscan.app/address/0xfe18f3c42f9318f20cae9cd5b2983e229554e435"
+ANCHOR = "https://testnet.arcscan.app/address/0xf550a882da3c26fbacd1b68aa83867102206b143"
 EMAIL = "roniejosephv@gmail.com"
 
 INK = colors.HexColor("#1a1a18"); MUT = colors.HexColor("#4a4a45")
@@ -72,12 +72,13 @@ def build_annex(path):
             ("Track", "4 — Best Agentic Economy Experience on Arc"),
             ("Participant", "Ronie Joseph (solo)"),
             ("Circle Developer Account", EMAIL),
-            ("Circle products used", "USDC · Wallets (developer-controlled) · Gateway · Nanopayments (x402)"),
+            ("Circle products used", "USDC · Wallets (developer-controlled) · Gateway · Nanopayments (x402) — all live &amp; load-bearing. "
+             "CCTP — autonomous cross-chain treasury (code-complete). USYC · StableFX — wired behind flags, testable on enterprise access."),
             ("Live demo (dashboard)", link(DEMO)),
             ("SpendGuard API (public)", link(SIGNER_API + "/summary")),
             ("GitHub repository", link(REPO)),
             ("Demo video", link(VIDEO_LINK) if VIDEO_LINK.startswith("http") else f"<i>{VIDEO_LINK}</i>"),
-            ("On-chain audit anchor", link(ANCHOR, "SpendAnchor 0xfe18…e435 on Arc Testnet (arcscan)")),
+            ("On-chain audit anchor", link(ANCHOR, "SpendAnchor 0xf550…b143 on Arc Testnet (arcscan)")),
             ("Scope", "Testnet demo — Arc Testnet, chain 5042002 (gas = USDC)"),
         ]),
         P("Working MVP — deployed and verifiable now", "h1"),
@@ -87,7 +88,8 @@ def build_annex(path):
           "Four services on Railway (SpendGuard signer, 3 x402 sellers, agent, dashboard), SQLite ledger on a "
           "persistent volume. Custody mode is SIGNER_MODE=circle — EIP-712 via Circle Wallets DCW EOA, verified "
           "against Gateway settlement on Arc Testnet (transfer 9bd6a149-1821-4341-a4aa-712cdc362382, 2026-07-06). "
-          "Spend epochs auto-anchor on Arc every 10 minutes."),
+          "Spend epochs auto-anchor on Arc every 10 minutes — signed keylessly by the DCW wallet (SpendAnchor redeployed under "
+          "DCW ownership; no raw private key anywhere in the deployed stack, payments and anchoring alike)."),
         P("Demo guide (the video's four beats, reproducible live)", "h2"),
         kv([
             ("1 · Delegation", "Agent researches quotes, subscribes to the cheapest seller, meters per-call gasless nanopayments."),
@@ -133,7 +135,13 @@ def build_annex(path):
           "message (0 &lt; 4)” — names neither the missing type nor the fix. Accept viem-normalized typed data, or return “types.EIP712Domain is required”.<br/>"
           "9. <b>GatewayClient.deposit() requires a raw private key,</b> so DCW-custodied wallets can't use it. Verified workaround: replicate "
           "its two calls (USDC.approve + GatewayWallet.deposit) via createContractExecutionTransaction. A documented DCW-native deposit "
-          "path is the single change that would most help agentic use cases — Circle-custodied buyers are exactly who agents need."),
+          "path is the single change that would most help agentic use cases — Circle-custodied buyers are exactly who agents need.<br/>"
+          "10. <b>Deploy vs execute live in different packages:</b> createContractExecutionTransaction is on @circle-fin/developer-controlled-wallets, "
+          "but deployContract is only on @circle-fin/smart-contract-platform — a dev working from the Wallets client won't find deploy. Cross-link them.<br/>"
+          "11. <b>deployContract rejects an empty constructorParameters: []</b> with a generic 400 that names no field; omitting it works. Accept [] or name the bad param.<br/>"
+          "12. <b>Gas Station (SCA-only) and Nanopayments/x402 (EOA-only) are mutually exclusive for one wallet</b> — agentic builders want both; emit a runtime hint on the mismatch.<br/>"
+          "13. <b>No single-call DCW-native CCTP helper:</b> cross-chain top-ups work by chaining approve → depositForBurn → IRIS attestation → receiveMessage "
+          "via contract-execution, but need a funded DCW wallet per source chain. A DCW-native CCTP method would unlock autonomous cross-chain treasury for agents."),
         P("Recommendations", "h2"),
         P("Ship a first-class “agent buyer” recipe: DCW EOA wallet + Gateway deposit via contract execution + x402 client with a "
           "policy hook — the five pieces exist today but must be discovered across four doc sites and two SDKs' type definitions. "
